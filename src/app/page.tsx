@@ -1,103 +1,207 @@
-import Image from "next/image";
+"use client"
+
+import { useState, useEffect, useMemo } from "react"
+import { PostCard } from "@/components/PostCard"
+import { BlogFilters } from "@/components/BlogFilters"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Sparkles, BookOpen, TrendingUp, Filter } from "lucide-react"
+
+interface Post {
+  id: string
+  title: string
+  content: string
+  slug: string
+  tags: string
+  image?: string | null
+  published: boolean
+  createdAt: string
+  author: {
+    name: string | null
+  }
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Fetch posts on component mount
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const response = await fetch('/api/posts')
+        if (response.ok) {
+          const data = await response.json()
+          setPosts(data)
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPosts()
+  }, [])
+
+  // Get all available tags from posts
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>()
+    posts.forEach(post => {
+      if (post.tags) {
+        post.tags.split(',').forEach(tag => {
+          tagSet.add(tag.trim())
+        })
+      }
+    })
+    return Array.from(tagSet).sort()
+  }, [posts])
+
+  // Filter posts based on search query and selected tags
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      // Search filter
+      const matchesSearch = searchQuery === "" || 
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.content.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Tag filter
+      const postTags = post.tags ? post.tags.split(',').map(tag => tag.trim()) : []
+      const matchesTags = selectedTags.length === 0 || 
+        selectedTags.every(tag => postTags.includes(tag))
+
+      return matchesSearch && matchesTags
+    })
+  }, [posts, searchQuery, selectedTags])
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    )
+  }
+
+  const handleClearFilters = () => {
+    setSearchQuery("")
+    setSelectedTags([])
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+            <p className="text-muted-foreground">Loading posts...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Hero Section */}
+      <div className="text-center space-y-6 py-8">
+        <div className="flex items-center justify-center space-x-2 mb-4">
+          <Sparkles className="h-8 w-8 text-primary animate-pulse" />
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+            Welcome to My Blog
+          </h1>
+          <Sparkles className="h-8 w-8 text-primary animate-pulse" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        
+        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+          Discover the latest articles, tutorials, and insights on web development, technology, and more
+        </p>
+        
+        {/* <Card className="max-w-md mx-auto bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
+          <CardContent className="flex items-center justify-center space-x-6 py-4">
+            <div className="flex items-center space-x-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              <span className="font-semibold">{posts.length} Posts</span>
+            </div>
+            <div className="h-4 w-px bg-border"></div>
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <span className="font-semibold">{filteredPosts.length} Results</span>
+            </div>
+          </CardContent>
+        </Card> */}
+      </div>
+
+      {/* Filters Section */}
+      <Card className="max-w-4xl mx-auto">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <Filter className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Filter & Search</h2>
+            {(searchQuery || selectedTags.length > 0) && (
+              <Badge variant="secondary" className="ml-auto">
+                {filteredPosts.length} of {posts.length}
+              </Badge>
+            )}
+          </div>
+          <BlogFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedTags={selectedTags}
+            onTagToggle={handleTagToggle}
+            availableTags={availableTags}
+            onClearFilters={handleClearFilters}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </CardContent>
+      </Card>
+
+      {/* Posts Grid */}
+      <div className="max-w-6xl mx-auto">
+        {filteredPosts.length === 0 ? (
+          <Card className="max-w-md mx-auto">
+            <CardContent className="text-center py-12">
+              {posts.length === 0 ? (
+                <>
+                  <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+                  <h2 className="text-2xl font-semibold mb-4">No posts yet</h2>
+                  <p className="text-muted-foreground">
+                    Check back later for new content!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Filter className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+                  <h2 className="text-2xl font-semibold mb-4">No posts found</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Try adjusting your search or filter criteria
+                  </p>
+                  <Button onClick={handleClearFilters} variant="outline">
+                    Clear all filters
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Latest Posts</h2>
+              {filteredPosts.length < posts.length && (
+                <Badge variant="outline" className="flex items-center space-x-1">
+                  <span>Filtered: {filteredPosts.length} of {posts.length}</span>
+                </Badge>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPosts.map((post) => (
+                <PostCard key={post.id} {...post} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
