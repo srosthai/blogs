@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { PostCard } from "@/components/PostCard"
-import { BlogFilters } from "@/components/BlogFilters"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Sparkles, BookOpen, TrendingUp, Filter } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Sparkles, BookOpen, Search, ChevronDown } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 interface Post {
   id: string
@@ -25,8 +25,29 @@ interface Post {
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [showAllPosts, setShowAllPosts] = useState(false)
+  const searchParams = useSearchParams()
+  const searchQuery = searchParams.get('search') || ''
+
+  // Filter posts based on search query from URL
+  const filteredPosts = useMemo(() => {
+    if (!searchQuery) return posts
+    
+    return posts.filter(post => 
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (post.tags && post.tags.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  }, [posts, searchQuery])
+
+  // Get posts to display (limited to 6 unless showAllPosts is true or we're searching)
+  const postsToDisplay = useMemo(() => {
+    const relevantPosts = searchQuery ? filteredPosts : posts
+    if (searchQuery || showAllPosts) {
+      return relevantPosts
+    }
+    return relevantPosts.slice(0, 6)
+  }, [posts, filteredPosts, searchQuery, showAllPosts])
 
   // Fetch posts on component mount
   useEffect(() => {
@@ -46,49 +67,6 @@ export default function Home() {
 
     fetchPosts()
   }, [])
-
-  // Get all available tags from posts
-  const availableTags = useMemo(() => {
-    const tagSet = new Set<string>()
-    posts.forEach(post => {
-      if (post.tags) {
-        post.tags.split(',').forEach(tag => {
-          tagSet.add(tag.trim())
-        })
-      }
-    })
-    return Array.from(tagSet).sort()
-  }, [posts])
-
-  // Filter posts based on search query and selected tags
-  const filteredPosts = useMemo(() => {
-    return posts.filter(post => {
-      // Search filter
-      const matchesSearch = searchQuery === "" || 
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.content.toLowerCase().includes(searchQuery.toLowerCase())
-
-      // Tag filter
-      const postTags = post.tags ? post.tags.split(',').map(tag => tag.trim()) : []
-      const matchesTags = selectedTags.length === 0 || 
-        selectedTags.every(tag => postTags.includes(tag))
-
-      return matchesSearch && matchesTags
-    })
-  }, [posts, searchQuery, selectedTags])
-
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    )
-  }
-
-  const handleClearFilters = () => {
-    setSearchQuery("")
-    setSelectedTags([])
-  }
 
   if (loading) {
     return (
@@ -118,87 +96,98 @@ export default function Home() {
         <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
           Discover the latest articles, tutorials, and insights on web development, technology, and more
         </p>
-        
-        {/* <Card className="max-w-md mx-auto bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-          <CardContent className="flex items-center justify-center space-x-6 py-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-primary" />
-              <span className="font-semibold">{posts.length} Posts</span>
-            </div>
-            <div className="h-4 w-px bg-border"></div>
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <span className="font-semibold">{filteredPosts.length} Results</span>
-            </div>
-          </CardContent>
-        </Card> */}
       </div>
 
-      {/* Filters Section */}
-      <Card className="max-w-4xl mx-auto">
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Filter className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Filter & Search</h2>
-            {(searchQuery || selectedTags.length > 0) && (
-              <Badge variant="secondary" className="ml-auto">
-                {filteredPosts.length} of {posts.length}
-              </Badge>
-            )}
-          </div>
-          <BlogFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedTags={selectedTags}
-            onTagToggle={handleTagToggle}
-            availableTags={availableTags}
-            onClearFilters={handleClearFilters}
-          />
-        </CardContent>
-      </Card>
+      {/* Search Results Header */}
+      {searchQuery && (
+        <div className="max-w-6xl mx-auto">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Search className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold">
+                    Search Results for "{searchQuery}"
+                  </h2>
+                </div>
+                <Badge variant="secondary">
+                  {filteredPosts.length} of {posts.length} posts
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Posts Grid */}
       <div className="max-w-6xl mx-auto">
-        {filteredPosts.length === 0 ? (
+        {posts.length === 0 ? (
           <Card className="max-w-md mx-auto">
             <CardContent className="text-center py-12">
-              {posts.length === 0 ? (
-                <>
-                  <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-                  <h2 className="text-2xl font-semibold mb-4">No posts yet</h2>
-                  <p className="text-muted-foreground">
-                    Check back later for new content!
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Filter className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-                  <h2 className="text-2xl font-semibold mb-4">No posts found</h2>
-                  <p className="text-muted-foreground mb-6">
-                    Try adjusting your search or filter criteria
-                  </p>
-                  <Button onClick={handleClearFilters} variant="outline">
-                    Clear all filters
-                  </Button>
-                </>
-              )}
+              <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+              <h2 className="text-2xl font-semibold mb-4">No posts yet</h2>
+              <p className="text-muted-foreground">
+                Check back later for new content!
+              </p>
+            </CardContent>
+          </Card>
+        ) : searchQuery && filteredPosts.length === 0 ? (
+          <Card className="max-w-md mx-auto">
+            <CardContent className="text-center py-12">
+              <Search className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+              <h2 className="text-2xl font-semibold mb-4">No posts found</h2>
+              <p className="text-muted-foreground">
+                No posts match your search for "{searchQuery}"
+              </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Latest Posts</h2>
-              {filteredPosts.length < posts.length && (
-                <Badge variant="outline" className="flex items-center space-x-1">
-                  <span>Filtered: {filteredPosts.length} of {posts.length}</span>
+              <h2 className="text-2xl font-bold">
+                {searchQuery ? 'Search Results' : 'Latest Posts'}
+              </h2>
+              {!searchQuery && posts.length > 6 && !showAllPosts && (
+                <Badge variant="outline" className="text-sm">
+                  Showing 6 of {posts.length} posts
                 </Badge>
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPosts.map((post) => (
+              {postsToDisplay.map((post) => (
                 <PostCard key={post.id} {...post} />
               ))}
             </div>
+            
+            {/* See All Button */}
+            {!searchQuery && posts.length > 6 && !showAllPosts && (
+              <div className="flex justify-center pt-6">
+                <Button 
+                  onClick={() => setShowAllPosts(true)}
+                  variant="outline"
+                  size="lg"
+                  className="flex items-center space-x-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  <span>See All Posts ({posts.length})</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Show Less Button */}
+            {!searchQuery && showAllPosts && posts.length > 6 && (
+              <div className="flex justify-center pt-6">
+                <Button 
+                  onClick={() => setShowAllPosts(false)}
+                  variant="outline"
+                  size="lg"
+                  className="flex items-center space-x-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  <span>Show Less</span>
+                  <ChevronDown className="h-4 w-4 rotate-180" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

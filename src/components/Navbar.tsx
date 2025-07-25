@@ -4,100 +4,144 @@ import Link from "next/link"
 import { useSession, signIn, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { FloatingDock } from "@/components/ui/floating-dock"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { BookOpen, Home, Tags, User, LogOut } from "lucide-react"
+import { NavbarSearch } from "@/components/NavbarSearch"
+import { BookOpen, Home, Tags, User, LogOut, Search, Sparkles, Sun, Moon } from "lucide-react"
+import {
+  IconHome,
+  IconTags,
+  IconSearch,
+  IconUser,
+  IconLogout,
+  IconBook2,
+  IconSun,
+  IconMoon
+} from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
 
 export function Navbar() {
   const { data: session } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
 
   const handleSignOut = async () => {
     try {
-      // Call our custom logout API
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       })
-
-      // Also call NextAuth signOut to clear client-side session
       await signOut({ redirect: false })
-
-      // Redirect to home page
       router.push('/')
     } catch (error) {
       console.error('Sign out error:', error)
-      // Fallback to NextAuth signOut if API fails
       await signOut({ redirect: false })
       router.push('/')
     }
   }
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
+
+  // Define dock items
+  const dockItems = [
+    {
+      title: "Home",
+      icon: <IconHome className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      href: "/",
+    },
+    {
+      title: "Tags",
+      icon: <IconTags className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      href: "/tags",
+    },
+    {
+      title: "Blog",
+      icon: <IconBook2 className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      href: "/",
+    },
+    {
+      title: "Theme",
+      icon: theme === 'dark'
+        ? <IconSun className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+        : <IconMoon className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      href: "#",
+      onClick: toggleTheme,
+    },
+  ]
+
+  // Add admin items if session exists
+  const adminItems = session ? [
+    {
+      title: "Admin",
+      icon: <IconUser className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      href: "/admin",
+    },
+    {
+      title: "Sign Out",
+      icon: <IconLogout className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      href: "#",
+      onClick: handleSignOut,
+    },
+  ] : []
+
+  const allItems = [...dockItems, ...adminItems]
+
   return (
-    <nav className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center space-x-2 text-2xl font-bold hover:opacity-80 transition-opacity"
-          >
-            <BookOpen className="h-8 w-8 text-primary" />
-            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              My Blog
-            </span>
-          </Link>
+    <div className="relative">
+      {/* Top Header with Logo and Search */}
+      <div className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-xl border-b border-border/40">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="group flex items-center space-x-3 hover:scale-105 transition-all duration-200"
+            >
+              <div className="relative">
+                <BookOpen className="h-8 w-8 text-primary group-hover:text-primary/80 transition-colors" />
+                <Sparkles className="h-3 w-3 text-primary/60 absolute -top-1 -right-1 animate-pulse" />
+              </div>
+              <span className="hidden sm:block text-xl font-bold bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
+                My Blog
+              </span>
+            </Link>
 
-          <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/" className="flex items-center space-x-2">
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">Home</span>
-              </Link>
-            </Button>
-
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/tags" className="flex items-center space-x-2">
-                <Tags className="h-4 w-4" />
-                <span className="hidden sm:inline">Tags</span>
-              </Link>
-            </Button>
-
-            <div className="mx-2">
-              <ThemeToggle />
+            {/* Search - Desktop */}
+            <div className="hidden md:block flex-1 max-w-md mx-6">
+              <NavbarSearch />
             </div>
 
-            {/* {session ? (
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary" className="hidden sm:flex items-center space-x-1">
-                  <User className="h-3 w-3" />
-                  <span>{session.user?.name}</span>
-                </Badge>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/admin" className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline">Admin</span>
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </Button>
-              </div>
-            ) : (
-              <Button size="sm" onClick={() => signIn()}>
-                Sign In
-              </Button>
-            )} */}
+            {/* User Badge */}
+            {session && (
+              <Badge variant="secondary" className="hidden md:flex items-center space-x-2">
+                <User className="h-3 w-3" />
+                <span>{session.user?.name}</span>
+              </Badge>
+            )}
+          </div>
+
+          {/* Mobile Search */}
+          <div className="md:hidden mt-3 pt-3 border-t border-border/40">
+            <NavbarSearch />
           </div>
         </div>
       </div>
-    </nav>
+
+      {/* Floating Dock */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+        <FloatingDock
+          items={allItems}
+          desktopClassName="bg-background/90 backdrop-blur-xl border border-border/40 shadow-2xl shadow-black/10 dark:shadow-black/40"
+          mobileClassName="bg-background/90 backdrop-blur-xl border border-border/40 shadow-2xl shadow-black/10 dark:shadow-black/40"
+        />
+      </div>
+    </div>
   )
 }
