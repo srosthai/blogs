@@ -28,78 +28,27 @@ const FloatingDockMobile = ({
   items: { title: string; icon: React.ReactNode; href: string; onClick?: () => void }[];
   className?: string;
 }) => {
-  const [open, setOpen] = useState(false);
   return (
-    <div className={cn("relative block md:hidden", className)}>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            layoutId="nav"
-            className="absolute bottom-full mb-2 inset-x-0 flex flex-col gap-2"
-          >
-            {items.map((item, idx) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                  transition: {
-                    delay: idx * 0.05,
-                  },
-                }}
-                transition={{ delay: (items.length - 1 - idx) * 0.05 }}
-              >
-                {item.onClick ? (
-                  <button
-                    onClick={item.onClick}
-                    key={item.title}
-                    className="h-10 w-10 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center"
-                  >
-                    <div className="h-4 w-4">{item.icon}</div>
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href}
-                    key={item.title}
-                    className="h-10 w-10 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center"
-                  >
-                    <div className="h-4 w-4">{item.icon}</div>
-                  </Link>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <button
-        onClick={() => setOpen(!open)}
-        className="h-10 w-10 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={cn(
-            "text-neutral-500 dark:text-neutral-400 h-5 w-5 transition-transform duration-200",
-            {
-              "rotate-45": open,
-            }
+    <div className={cn("flex md:hidden gap-2 bg-gray-50 dark:bg-neutral-900 p-2 rounded-2xl", className)}>
+      {items.map((item) => (
+        <div key={item.title}>
+          {item.onClick ? (
+            <button
+              onClick={item.onClick}
+              className="h-10 w-10 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center"
+            >
+              <div className="h-4 w-4">{item.icon}</div>
+            </button>
+          ) : (
+            <Link
+              href={item.href}
+              className="h-10 w-10 rounded-full bg-gray-200 dark:bg-neutral-800 flex items-center justify-center"
+            >
+              <div className="h-4 w-4">{item.icon}</div>
+            </Link>
           )}
-        >
-          <path d="M12 2v20M2 12h20" />
-        </svg>
-      </button>
+        </div>
+      ))}
     </div>
   );
 };

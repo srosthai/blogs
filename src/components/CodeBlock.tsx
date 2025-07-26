@@ -38,7 +38,7 @@ export function CodeBlock({ children, className, language }: CodeBlockProps) {
           variant="ghost"
           size="sm"
           onClick={copyToClipboard}
-          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
+          className="h-6 w-6 p-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-muted"
           title="Copy code"
         >
           {copied ? (
@@ -84,7 +84,7 @@ export function InlineCode({ children, className }: InlineCodeProps) {
         variant="ghost"
         size="sm"
         onClick={copyToClipboard}
-        className="h-4 w-4 p-0 absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted rounded-sm"
+        className="h-4 w-4 p-0 absolute right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-muted rounded-sm"
         title="Copy"
       >
         {copied ? (

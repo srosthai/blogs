@@ -3,13 +3,13 @@
 import { useSession } from "next-auth/react"
 import { AdminAuthGuard } from "@/lib/admin-auth"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -21,9 +21,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Pagination } from "@/components/ui/pagination"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { MoreHorizontal, Plus, Edit, Trash2, Eye } from "lucide-react"
+import { useEffect, useState, useMemo } from "react"
+import { MoreHorizontal, Plus, Edit, Trash2, Eye, Search, Filter } from "lucide-react"
 import { toast } from "sonner"
 
 interface Post {
@@ -40,10 +49,33 @@ function AdminDashboard() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [deletePostId, setDeletePostId] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const postsPerPage = 10
 
   useEffect(() => {
     fetchPosts()
   }, [])
+
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.tags.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === "all" ||
+        (statusFilter === "published" && post.published) ||
+        (statusFilter === "draft" && !post.published)
+      return matchesSearch && matchesStatus
+    })
+  }, [posts, searchTerm, statusFilter])
+
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage)
+  const startIndex = (currentPage - 1) * postsPerPage
+  const paginatedPosts = filteredPosts.slice(startIndex, startIndex + postsPerPage)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
 
   const fetchPosts = async () => {
     try {
@@ -65,7 +97,7 @@ function AdminDashboard() {
   const togglePublished = async (postId: string, published: boolean) => {
     const action = published ? 'unpublishing' : 'publishing'
     const loadingToast = toast.loading(`${action.charAt(0).toUpperCase() + action.slice(1)} post...`)
-    
+
     try {
       const response = await fetch(`/api/admin/posts/${postId}`, {
         method: 'PATCH',
@@ -74,7 +106,7 @@ function AdminDashboard() {
         },
         body: JSON.stringify({ published: !published }),
       })
-      
+
       if (response.ok) {
         toast.dismiss(loadingToast)
         toast.success(published ? 'Post unpublished successfully!' : 'Post published successfully!')
@@ -92,12 +124,12 @@ function AdminDashboard() {
 
   const deletePost = async (postId: string) => {
     const loadingToast = toast.loading('Deleting post...')
-    
+
     try {
       const response = await fetch(`/api/admin/posts/${postId}`, {
         method: 'DELETE',
       })
-      
+
       if (response.ok) {
         toast.dismiss(loadingToast)
         toast.success('Post deleted successfully!')
@@ -137,73 +169,138 @@ function AdminDashboard() {
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {posts.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-muted-foreground mb-4">You haven't created any posts yet.</p>
-              <Link href="/admin/new">
-                <Button>Create your first post</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          posts.map((post) => (
-            <Card key={post.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {post.title}
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 mb-10">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search posts by title or tags..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="sm:ml-4 flex-shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Filter className="w-4 h-4 mr-2" />
+                {statusFilter === "all" ? "All Posts" : statusFilter === "published" ? "Published" : "Draft"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setStatusFilter("all")}>
+                All Posts
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter("published")}>
+                Published Only
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter("draft")}>
+                Draft Only
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {posts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">You haven't created any posts yet.</p>
+          <Link href="/admin/new">
+            <Button>Create your first post</Button>
+          </Link>
+        </div>
+      ) : filteredPosts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">No posts match your search criteria.</p>
+          <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
+            Clear filters
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedPosts.map((post) => (
+                  <TableRow key={post.id}>
+                    <TableCell className="font-medium">{post.title}</TableCell>
+                    <TableCell>
                       <Badge variant={post.published ? "default" : "secondary"}>
                         {post.published ? "Published" : "Draft"}
                       </Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      Created on {new Date(post.createdAt).toLocaleDateString()}
-                    </CardDescription>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {post.published && (
-                        <DropdownMenuItem asChild>
-                          <Link href={`/blog/${post.slug}`}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/edit/${post.id}`}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => togglePublished(post.id, post.published)}
-                      >
-                        {post.published ? "Unpublish" : "Publish"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeletePostId(post.id)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardHeader>
-            </Card>
-          ))
-        )}
-      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {post.tags || "No tags"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {post.published && (
+                            <DropdownMenuItem asChild>
+                              <Link href={`/blog/${post.slug}`}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/edit/${post.id}`}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => togglePublished(post.id, post.published)}
+                          >
+                            {post.published ? "Unpublish" : "Publish"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeletePostId(post.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between mt-6">
+            <p className="text-sm text-muted-foreground">
+              Showing {startIndex + 1}-{Math.min(startIndex + postsPerPage, filteredPosts.length)} of {filteredPosts.length} posts
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </>
+      )}
 
       <AlertDialog open={!!deletePostId} onOpenChange={() => setDeletePostId(null)}>
         <AlertDialogContent>
