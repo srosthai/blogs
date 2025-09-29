@@ -26,7 +26,10 @@ export async function GET(
     const { id } = await params
     const { data: post, error } = await supabase
       .from('Post')
-      .select('*')
+      .select(`
+        *,
+        category:Category(*)
+      `)
       .eq('id', id)
       .eq('authorId', user.id)
       .single()

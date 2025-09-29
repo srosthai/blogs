@@ -14,9 +14,9 @@ interface PostCardProps {
   image?: string | null
   published: boolean
   createdAt: string | Date
-  author: {
+  author?: {
     name: string | null
-  }
+  } | null
 }
 
 export function PostCard({ title, content, slug, tags, image, createdAt, author }: PostCardProps) {
@@ -95,7 +95,7 @@ export function PostCard({ title, content, slug, tags, image, createdAt, author 
           <Calendar className="mr-1 h-3 w-3" />
           <span className="mr-3">{formatDate(createdAt)}</span>
           <User className="mr-1 h-3 w-3" />
-          <span>By {author.name}</span>
+          <span>By {author?.name || 'Unknown Author'}</span>
         </div>
 
         {/* Title */}

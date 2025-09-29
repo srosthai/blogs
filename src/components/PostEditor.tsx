@@ -12,6 +12,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import { toast } from "sonner"
 import { CodeBlock, InlineCode } from '@/components/CodeBlock'
+import { CategorySelect } from '@/components/CategorySelect'
 import { Upload, X, Image as ImageIcon } from "lucide-react"
 import Image from "next/image"
 
@@ -24,6 +25,7 @@ interface PostEditorProps {
     tags: string
     image?: string
     published: boolean
+    categoryId?: string | null
   }
   isEditing?: boolean
 }
@@ -37,6 +39,7 @@ export function PostEditor({ initialData, isEditing = false }: PostEditorProps) 
     tags: initialData?.tags || '',
     image: initialData?.image || '',
     published: initialData?.published || false,
+    categoryId: initialData?.categoryId || null,
   })
   const [loading, setLoading] = useState(false)
   const [previewMode, setPreviewMode] = useState(false)
@@ -335,6 +338,12 @@ export function PostEditor({ initialData, isEditing = false }: PostEditorProps) 
                 </div>
               )}
             </div>
+
+            <CategorySelect
+              value={formData.categoryId}
+              onValueChange={(categoryId) => setFormData(prev => ({ ...prev, categoryId }))}
+              placeholder="Select a category (optional)"
+            />
 
             {/* Featured Image Upload */}
             <div>

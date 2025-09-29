@@ -1,7 +1,6 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { AdminAuthGuard } from "@/lib/admin-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -148,14 +147,14 @@ function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="p-6">
         <div className="text-center">Loading your posts...</div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -326,9 +325,5 @@ function AdminDashboard() {
 }
 
 export default function AdminPage() {
-  return (
-    <AdminAuthGuard>
-      <AdminDashboard />
-    </AdminAuthGuard>
-  )
+  return <AdminDashboard />
 }

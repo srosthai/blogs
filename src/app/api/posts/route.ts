@@ -1,21 +1,26 @@
 import { NextResponse } from "next/server"
-import { db, supabase } from "@/lib/prisma"
+import { db } from "@/lib/prisma"
 
 export async function GET() {
   try {
-    // Get posts with author information using Supabase join
-    const { data: posts, error } = await supabase
-      .from('Post')
-      .select(`
-        *,
-        author:User(name)
-      `)
-      .eq('published', true)
-      .order('createdAt', { ascending: false })
-    
-    if (error) throw error
+    // Get posts with author information using Prisma
+    const posts = await db.post.findMany({
+      where: {
+        published: true
+      },
+      include: {
+        author: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
 
-    return NextResponse.json(posts || [])
+    return NextResponse.json(posts)
   } catch (error) {
     console.error('Error fetching posts:', error)
     return NextResponse.json(

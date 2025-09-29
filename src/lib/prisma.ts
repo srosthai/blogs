@@ -44,8 +44,15 @@ export const db = {
   },
   
   post: {
-    findMany: async ({ where = {}, orderBy = {} }: { where?: any; orderBy?: any } = {}) => {
-      let query = supabase.from('Post').select('*')
+    findMany: async ({ where = {}, orderBy = {}, include = {} }: { where?: any; orderBy?: any; include?: any } = {}) => {
+      let selectFields = '*'
+      
+      // Include category information if requested
+      if (include.category) {
+        selectFields = `*, category:Category(*)`
+      }
+      
+      let query = supabase.from('Post').select(selectFields)
       
       if (where.published !== undefined) {
         query = query.eq('published', where.published)
@@ -55,6 +62,9 @@ export const db = {
       }
       if (where.authorId) {
         query = query.eq('authorId', where.authorId)
+      }
+      if (where.categoryId) {
+        query = query.eq('categoryId', where.categoryId)
       }
       
       if (orderBy.createdAt) {
@@ -67,10 +77,17 @@ export const db = {
       return data || []
     },
     
-    findUnique: async ({ where }: { where: { id?: string; slug?: string } }) => {
+    findUnique: async ({ where, include = {} }: { where: { id?: string; slug?: string }; include?: any }) => {
+      let selectFields = '*'
+      
+      // Include category information if requested
+      if (include?.category) {
+        selectFields = `*, category:Category(*)`
+      }
+      
       const { data, error } = await supabase
         .from('Post')
-        .select('*')
+        .select(selectFields)
         .eq(where.id ? 'id' : 'slug', where.id || where.slug)
         .single()
       
@@ -79,9 +96,16 @@ export const db = {
     },
     
     create: async ({ data }: { data: any }) => {
+      const postData = {
+        ...data,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      
       const { data: post, error } = await supabase
         .from('Post')
-        .insert(data)
+        .insert(postData)
         .select()
         .single()
       
@@ -90,9 +114,14 @@ export const db = {
     },
     
     update: async ({ where, data }: { where: { id: string }; data: any }) => {
+      const updateData = {
+        ...data,
+        updatedAt: new Date().toISOString()
+      }
+      
       const { data: post, error } = await supabase
         .from('Post')
-        .update(data)
+        .update(updateData)
         .eq('id', where.id)
         .select()
         .single()
@@ -104,6 +133,87 @@ export const db = {
     delete: async ({ where }: { where: { id: string } }) => {
       const { error } = await supabase
         .from('Post')
+        .delete()
+        .eq('id', where.id)
+      
+      if (error) throw error
+    }
+  },
+
+  category: {
+    findMany: async ({ where = {}, orderBy = {} }: { where?: any; orderBy?: any } = {}) => {
+      let query = supabase.from('Category').select('*')
+      
+      if (where.status !== undefined) {
+        query = query.eq('status', where.status)
+      }
+      if (where.name) {
+        query = query.ilike('name', `%${where.name}%`)
+      }
+      
+      if (orderBy.createdAt) {
+        query = query.order('createdAt', { ascending: orderBy.createdAt === 'asc' })
+      } else if (orderBy.name) {
+        query = query.order('name', { ascending: orderBy.name === 'asc' })
+      } else {
+        query = query.order('createdAt', { ascending: false })
+      }
+      
+      const { data, error } = await query
+      
+      if (error) throw error
+      return data || []
+    },
+    
+    findUnique: async ({ where }: { where: { id: string } }) => {
+      const { data, error } = await supabase
+        .from('Category')
+        .select('*')
+        .eq('id', where.id)
+        .single()
+      
+      if (error) return null
+      return data
+    },
+    
+    create: async ({ data }: { data: any }) => {
+      const categoryData = {
+        ...data,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      
+      const { data: category, error } = await supabase
+        .from('Category')
+        .insert(categoryData)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return category
+    },
+    
+    update: async ({ where, data }: { where: { id: string }; data: any }) => {
+      const updateData = {
+        ...data,
+        updatedAt: new Date().toISOString()
+      }
+      
+      const { data: category, error } = await supabase
+        .from('Category')
+        .update(updateData)
+        .eq('id', where.id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return category
+    },
+    
+    delete: async ({ where }: { where: { id: string } }) => {
+      const { error } = await supabase
+        .from('Category')
         .delete()
         .eq('id', where.id)
       
