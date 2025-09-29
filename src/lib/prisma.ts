@@ -97,7 +97,14 @@ export const db = {
     
     create: async ({ data }: { data: any }) => {
       const postData = {
-        ...data,
+        title: data.title,
+        content: data.content,
+        slug: data.slug,
+        tags: data.tags || '',
+        image: data.image || null,
+        published: data.published || false,
+        authorId: data.authorId,
+        categoryId: data.categoryId || null,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -115,7 +122,13 @@ export const db = {
     
     update: async ({ where, data }: { where: { id: string }; data: any }) => {
       const updateData = {
-        ...data,
+        title: data.title,
+        content: data.content,
+        slug: data.slug,
+        tags: data.tags || '',
+        image: data.image || null,
+        published: data.published,
+        categoryId: data.categoryId || null,
         updatedAt: new Date().toISOString()
       }
       
@@ -178,7 +191,9 @@ export const db = {
     
     create: async ({ data }: { data: any }) => {
       const categoryData = {
-        ...data,
+        name: data.name,
+        description: data.description || '',
+        status: data.status !== undefined ? Boolean(data.status) : true,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()

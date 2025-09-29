@@ -88,7 +88,15 @@ const SelectValue = React.forwardRef<
       if (selectItems.length > 0) {
         setSelectedText(selectItems[0].textContent || value)
       } else {
-        setSelectedText(value)
+        // Retry after a short delay in case items haven't rendered yet
+        setTimeout(() => {
+          const retryItems = document.querySelectorAll(`[data-select-value="${value}"]`)
+          if (retryItems.length > 0) {
+            setSelectedText(retryItems[0].textContent || value)
+          } else {
+            setSelectedText(value)
+          }
+        }, 100)
       }
     }
 

@@ -55,7 +55,7 @@ interface Category {
   id: string
   name: string
   description: string
-  status: number
+  status: boolean
   createdAt: string
   updatedAt: string
 }
@@ -78,7 +78,7 @@ export default function CategoriesPage() {
       const params = new URLSearchParams()
       if (searchTerm) params.append('search', searchTerm)
       if (statusFilter !== 'all') {
-        params.append('status', statusFilter === 'active' ? '1' : '0')
+        params.append('status', statusFilter === 'active' ? 'true' : 'false')
       }
       
       const response = await fetch(`/api/admin/categories?${params}`)
@@ -89,7 +89,6 @@ export default function CategoriesPage() {
         toast.error('Failed to load categories')
       }
     } catch (error) {
-      console.error('Error fetching categories:', error)
       toast.error('An error occurred while loading categories')
     } finally {
       setLoading(false)
@@ -104,14 +103,14 @@ export default function CategoriesPage() {
     return () => clearTimeout(delayedFetch)
   }, [searchTerm, statusFilter])
 
-  const toggleStatus = async (categoryId: string, currentStatus: number) => {
-    const newStatus = currentStatus === 1 ? 0 : 1
-    const action = newStatus === 1 ? 'activating' : 'deactivating'
+  const toggleStatus = async (categoryId: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
+    const action = newStatus ? 'activating' : 'deactivating'
     const loadingToast = toast.loading(`${action.charAt(0).toUpperCase() + action.slice(1)} category...`)
 
     try {
       const category = categories.find(c => c.id === categoryId)
-      if (!category) return
+      if (!category || !category.name) return
 
       const response = await fetch(`/api/admin/categories/${categoryId}`, {
         method: 'PUT',
@@ -120,21 +119,20 @@ export default function CategoriesPage() {
         },
         body: JSON.stringify({
           name: category.name,
-          description: category.description,
+          description: category.description || '',
           status: newStatus
         }),
       })
 
       if (response.ok) {
         toast.dismiss(loadingToast)
-        toast.success(`Category ${newStatus === 1 ? 'activated' : 'deactivated'} successfully!`)
+        toast.success(`Category ${newStatus ? 'activated' : 'deactivated'} successfully!`)
         fetchCategories()
       } else {
         toast.dismiss(loadingToast)
         toast.error('Failed to update category status')
       }
     } catch (error) {
-      console.error('Error updating category:', error)
       toast.dismiss(loadingToast)
       toast.error('An error occurred while updating the category')
     }
@@ -158,7 +156,6 @@ export default function CategoriesPage() {
         toast.error('Failed to delete category')
       }
     } catch (error) {
-      console.error('Error deleting category:', error)
       toast.dismiss(loadingToast)
       toast.error('An error occurred while deleting the category')
     }
@@ -166,11 +163,11 @@ export default function CategoriesPage() {
 
   const filteredCategories = useMemo(() => {
     return categories.filter(category => {
-      const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.description.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSearch = (category?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (category?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = statusFilter === "all" ||
-        (statusFilter === "active" && category.status === 1) ||
-        (statusFilter === "inactive" && category.status === 0)
+        (statusFilter === "active" && category.status === true) ||
+        (statusFilter === "inactive" && category.status === false)
       return matchesSearch && matchesStatus
     })
   }, [categories, searchTerm, statusFilter])
@@ -283,13 +280,13 @@ export default function CategoriesPage() {
                 <TableBody>
                   {filteredCategories.map((category) => (
                     <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
+                      <TableCell className="font-medium">{category?.name || 'Unnamed Category'}</TableCell>
                       <TableCell className="text-muted-foreground max-w-xs truncate">
                         {category.description || "No description"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={category.status === 1 ? "default" : "secondary"}>
-                          {category.status === 1 ? "Active" : "Inactive"}
+                        <Badge variant={category.status ? "default" : "secondary"}>
+                          {category.status ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
@@ -312,7 +309,7 @@ export default function CategoriesPage() {
                             <DropdownMenuItem
                               onClick={() => toggleStatus(category.id, category.status)}
                             >
-                              {category.status === 1 ? (
+                              {category.status ? (
                                 <>
                                   <EyeOff className="w-4 h-4 mr-2" />
                                   Deactivate
@@ -346,9 +343,9 @@ export default function CategoriesPage() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
-                        <CardTitle className="text-lg">{category.name}</CardTitle>
-                        <Badge variant={category.status === 1 ? "default" : "secondary"} className="w-fit">
-                          {category.status === 1 ? "Active" : "Inactive"}
+                        <CardTitle className="text-lg">{category?.name || 'Unnamed Category'}</CardTitle>
+                        <Badge variant={category.status ? "default" : "secondary"} className="w-fit">
+                          {category.status ? "Active" : "Inactive"}
                         </Badge>
                       </div>
                       <DropdownMenu>
@@ -367,7 +364,7 @@ export default function CategoriesPage() {
                           <DropdownMenuItem
                             onClick={() => toggleStatus(category.id, category.status)}
                           >
-                            {category.status === 1 ? (
+                            {category.status ? (
                               <>
                                 <EyeOff className="w-4 h-4 mr-2" />
                                 Deactivate

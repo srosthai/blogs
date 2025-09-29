@@ -71,7 +71,7 @@ export default async function BlogPost({ params }: Props) {
         <header className="mb-8">
           <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
           <div className="flex items-center gap-4 text-muted-foreground mb-4">
-            <span>By {post.author.name}</span>
+            <span>By {post.author?.name || 'Unknown Author'}</span>
             <span>•</span>
             <time>{new Date(post.createdAt).toLocaleDateString()}</time>
           </div>

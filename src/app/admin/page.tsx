@@ -28,10 +28,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Pagination } from "@/components/ui/pagination"
 import Link from "next/link"
 import { useEffect, useState, useMemo } from "react"
-import { MoreHorizontal, Plus, Edit, Trash2, Eye, Search, Filter } from "lucide-react"
+import { MoreHorizontal, Plus, Edit, Trash2, Eye, Search, Filter, Grid3X3, TableProperties } from "lucide-react"
 import { toast } from "sonner"
 
 interface Post {
@@ -41,6 +47,12 @@ interface Post {
   published: boolean
   createdAt: string
   tags: string
+  image?: string | null
+  categoryId?: string | null
+  category?: {
+    id: string
+    name: string
+  } | null
 }
 
 function AdminDashboard() {
@@ -50,6 +62,7 @@ function AdminDashboard() {
   const [deletePostId, setDeletePostId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all")
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table")
   const [currentPage, setCurrentPage] = useState(1)
   const postsPerPage = 10
 
@@ -60,7 +73,8 @@ function AdminDashboard() {
   const filteredPosts = useMemo(() => {
     return posts.filter(post => {
       const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.tags.toLowerCase().includes(searchTerm.toLowerCase())
+        post.tags.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (post.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = statusFilter === "all" ||
         (statusFilter === "published" && post.published) ||
         (statusFilter === "draft" && !post.published)
@@ -169,17 +183,19 @@ function AdminDashboard() {
       </div>
 
       {/* Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search posts by title or tags..."
+            placeholder="Search posts by title, tags, or category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
-        <div className="sm:ml-4 flex-shrink-0">
+        
+        <div className="flex items-center gap-2">
+          {/* Status Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">
@@ -199,6 +215,26 @@ function AdminDashboard() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* View Mode Toggle */}
+          <div className="flex border rounded-md">
+            <Button
+              variant={viewMode === "table" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("table")}
+              className="rounded-r-none"
+            >
+              <TableProperties className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="rounded-l-none"
+            >
+              <Grid3X3 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -218,45 +254,125 @@ function AdminDashboard() {
         </div>
       ) : (
         <>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tags</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedPosts.map((post) => (
-                  <TableRow key={post.id}>
-                    <TableCell className="font-medium">{post.title}</TableCell>
-                    <TableCell>
-                      <Badge variant={post.published ? "default" : "secondary"}>
+          {viewMode === "table" ? (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tags</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedPosts.map((post) => (
+                    <TableRow key={post.id}>
+                      <TableCell className="font-medium max-w-xs">
+                        <div className="truncate">{post.title}</div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {post.category?.name || "No category"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={post.published ? "default" : "secondary"}>
+                          {post.published ? "Published" : "Draft"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-xs">
+                        <div className="truncate">{post.tags || "No tags"}</div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(post.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {post.published && (
+                              <DropdownMenuItem asChild>
+                                <Link href={`/blog/${post.slug}`} target="_blank">
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Post
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/edit/${post.id}`}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => togglePublished(post.id, post.published)}
+                            >
+                              {post.published ? "Unpublish" : "Publish"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setDeletePostId(post.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedPosts.map((post) => (
+                <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-0 bg-white dark:bg-gray-900">
+                  {/* Image Section */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    {post.image ? (
+                      <img
+                        src={post.image}
+                        alt={post.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <div className="text-4xl text-gray-400">📄</div>
+                      </div>
+                    )}
+                    {/* Status Badge Overlay */}
+                    <div className="absolute top-3 left-3">
+                      <Badge 
+                        variant={post.published ? "default" : "secondary"} 
+                        className="text-xs shadow-md"
+                      >
                         {post.published ? "Published" : "Draft"}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {post.tags || "No tags"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
+                    </div>
+                    {/* Actions Menu Overlay */}
+                    <div className="absolute top-3 right-3">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-md"
+                          >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {post.published && (
                             <DropdownMenuItem asChild>
-                              <Link href={`/blog/${post.slug}`}>
+                              <Link href={`/blog/${post.slug}`} target="_blank">
                                 <Eye className="w-4 h-4 mr-2" />
-                                View Details
+                                View Post
                               </Link>
                             </DropdownMenuItem>
                           )}
@@ -280,12 +396,56 @@ function AdminDashboard() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                    </div>
+                  </div>
+
+                  {/* Content Section */}
+                  <CardContent className="p-4 space-y-3">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {post.title}
+                      </h3>
+                      
+                      {/* Category and Date */}
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span className="flex items-center">
+                          {post.category ? (
+                            <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md text-xs">
+                              {post.category.name}
+                            </span>
+                          ) : (
+                            <span className="text-xs">No category</span>
+                          )}
+                        </span>
+                        <span className="text-xs">
+                          {new Date(post.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {/* Tags */}
+                      {post.tags && (
+                        <div className="flex flex-wrap gap-1 pt-2">
+                          {post.tags.split(',').slice(0, 4).map((tag, index) => (
+                            <span 
+                              key={index}
+                              className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-full"
+                            >
+                              #{tag.trim()}
+                            </span>
+                          ))}
+                          {post.tags.split(',').length > 4 && (
+                            <span className="text-xs text-muted-foreground self-center">
+                              +{post.tags.split(',').length - 4}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="flex items-center justify-between mt-6">

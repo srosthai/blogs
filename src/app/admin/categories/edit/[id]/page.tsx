@@ -16,27 +16,38 @@ interface Category {
   id: string
   name: string
   description: string
-  status: number
+  status: boolean
 }
 
-export default function EditCategoryPage({ params }: { params: { id: string } }) {
+export default function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
+  const [id, setId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    status: 1
+    status: true
   })
 
   useEffect(() => {
-    fetchCategory()
-  }, [params.id])
+    params.then(({ id }) => {
+      setId(id)
+    })
+  }, [params])
+
+  useEffect(() => {
+    if (id) {
+      fetchCategory()
+    }
+  }, [id])
 
   const fetchCategory = async () => {
+    if (!id) return
+    
     try {
       setFetchLoading(true)
-      const response = await fetch(`/api/admin/categories/${params.id}`)
+      const response = await fetch(`/api/admin/categories/${id}`)
       if (response.ok) {
         const category: Category = await response.json()
         setFormData({
@@ -49,7 +60,6 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
         router.push("/admin/categories")
       }
     } catch (error) {
-      console.error("Error fetching category:", error)
       toast.error("Failed to load category")
       router.push("/admin/categories")
     } finally {
@@ -69,7 +79,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
     const loadingToast = toast.loading("Updating category...")
 
     try {
-      const response = await fetch(`/api/admin/categories/${params.id}`, {
+      const response = await fetch(`/api/admin/categories/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -87,7 +97,6 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
         toast.error(error.error || "Failed to update category")
       }
     } catch (error) {
-      console.error("Error updating category:", error)
       toast.dismiss(loadingToast)
       toast.error("An error occurred while updating the category")
     } finally {
@@ -95,7 +104,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
     }
   }
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -156,8 +165,8 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
             <div className="flex items-center space-x-2">
               <Switch
                 id="status"
-                checked={formData.status === 1}
-                onCheckedChange={(checked) => handleInputChange("status", checked ? 1 : 0)}
+                checked={formData.status}
+                onCheckedChange={(checked) => handleInputChange("status", checked)}
               />
               <Label htmlFor="status">
                 Active (Published and visible to users)

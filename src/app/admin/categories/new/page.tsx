@@ -18,7 +18,7 @@ export default function NewCategoryPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    status: 1
+    status: true
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +51,6 @@ export default function NewCategoryPage() {
         toast.error(error.error || "Failed to create category")
       }
     } catch (error) {
-      console.error("Error creating category:", error)
       toast.dismiss(loadingToast)
       toast.error("An error occurred while creating the category")
     } finally {
@@ -59,7 +58,7 @@ export default function NewCategoryPage() {
     }
   }
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -112,8 +111,8 @@ export default function NewCategoryPage() {
             <div className="flex items-center space-x-2">
               <Switch
                 id="status"
-                checked={formData.status === 1}
-                onCheckedChange={(checked) => handleInputChange("status", checked ? 1 : 0)}
+                checked={formData.status}
+                onCheckedChange={(checked) => handleInputChange("status", checked)}
               />
               <Label htmlFor="status">
                 Active (Published and visible to users)

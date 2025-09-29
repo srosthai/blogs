@@ -24,6 +24,7 @@ export async function GET(
     }
 
     const { id } = await params
+    
     const { data: post, error } = await supabase
       .from('Post')
       .select(`
@@ -39,10 +40,9 @@ export async function GET(
     }
 
     return NextResponse.json(post)
-  } catch (error) {
-    console.error('Error fetching post:', error)
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     )
   }
@@ -90,10 +90,9 @@ export async function PATCH(
     })
 
     return NextResponse.json(updatedPost)
-  } catch (error) {
-    console.error('Error updating post:', error)
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     )
   }
@@ -137,10 +136,9 @@ export async function DELETE(
     await db.post.delete({ where: { id } })
 
     return NextResponse.json({ message: "Post deleted successfully" })
-  } catch (error) {
-    console.error('Error deleting post:', error)
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     )
   }

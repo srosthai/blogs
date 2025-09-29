@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       where.name = search
     }
     if (status !== null && status !== '') {
-      where.status = parseInt(status)
+      where.status = status === '1' || status === 'true'
     }
 
     const orderBy: any = {}
@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(categories)
   } catch (error) {
-    console.error('Error fetching categories:', error)
     return NextResponse.json(
       { error: 'Failed to fetch categories' },
       { status: 500 }
@@ -63,13 +62,12 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         description: description || '',
-        status: status !== undefined ? status : 1
+        status: status !== undefined ? Boolean(status) : true
       }
     })
 
     return NextResponse.json(category, { status: 201 })
   } catch (error) {
-    console.error('Error creating category:', error)
     return NextResponse.json(
       { error: 'Failed to create category' },
       { status: 500 }

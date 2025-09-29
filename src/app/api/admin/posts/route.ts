@@ -24,6 +24,9 @@ export async function GET() {
       where: {
         authorId: user.id
       },
+      include: {
+        category: true
+      },
       orderBy: {
         createdAt: 'desc'
       }
@@ -47,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { title, content, slug, tags, image, published } = await request.json()
+    const { title, content, slug, tags, image, published, categoryId } = await request.json()
 
     // Validate required fields
     if (!title || !content || !slug) {
@@ -87,14 +90,15 @@ export async function POST(request: Request) {
         image: image || null,
         published: published || false,
         authorId: user.id,
+        categoryId: categoryId || null,
       }
     })
 
     return NextResponse.json(post, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating post:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     )
   }

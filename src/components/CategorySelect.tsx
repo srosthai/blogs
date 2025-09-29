@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Select,
   SelectContent,
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 interface Category {
   id: string
   name: string
-  status: number
+  status: boolean
 }
 
 interface CategorySelectProps {
@@ -38,16 +38,19 @@ export function CategorySelect({
     fetchCategories()
   }, [])
 
+  const selectedCategory = categories.find(cat => cat.id === value)
+  const displayValue = value === null || value === "none" ? "none" : value || "none"
+
   const fetchCategories = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/categories?status=1')
+      const response = await fetch('/api/admin/categories?status=true')
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
       }
     } catch (error) {
-      console.error('Error fetching categories:', error)
+      // Silently handle error
     } finally {
       setLoading(false)
     }
@@ -68,18 +71,23 @@ export function CategorySelect({
         {required && <span className="text-destructive ml-1">*</span>}
       </Label>
       <Select 
-        value={value || "none"} 
+        value={displayValue} 
         onValueChange={handleValueChange}
         disabled={loading}
       >
         <SelectTrigger>
-          <SelectValue placeholder={loading ? "Loading..." : placeholder} />
+          <SelectValue placeholder={loading ? "Loading..." : placeholder}>
+            {loading ? "Loading..." : 
+             selectedCategory ? selectedCategory.name : 
+             value === null ? "No Category" : 
+             placeholder}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">No Category</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category.id} value={category.id}>
-              {category.name}
+              {category?.name || 'Unnamed Category'}
             </SelectItem>
           ))}
         </SelectContent>
