@@ -3,8 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "@/components/SessionProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -24,8 +22,8 @@ export const metadata: Metadata = {
     default: "SrosThaiDev Blog - Web Development & Technology Insights",
     template: "%s | SrosThaiDev Blog"
   },
-  description: "Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Developer at SrosThaiDev Blog.",
-  keywords: ["web development", "programming", "technology", "tutorials", "Full Stack Developer", "javascript", "react", "nextjs", "blog"],
+  description: "Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Developerper at SrosThaiDev Blog.",
+  keywords: ["web development", "programming", "technology", "tutorials", "Full Stack Developerper", "javascript", "react", "nextjs", "blog"],
   authors: [{ name: "SrosThaiDev" }],
   creator: "SrosThaiDev",
   publisher: "SrosThaiDev",
@@ -46,7 +44,7 @@ export const metadata: Metadata = {
     url: 'https://blog.srosthai.dev',
     siteName: 'SrosThaiDev Blog',
     title: 'SrosThaiDev Blog - Web Development & Technology Insights',
-    description: 'Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Develo.',
+    description: 'Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Developer.',
     images: [
       {
         url: '/me-fav.png',
@@ -59,7 +57,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'SrosThaiDev Blog - Web Development & Technology Insights',
-    description: 'Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Develo.',
+    description: 'Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Developer.',
     images: ['/me-fav.png'],
     creator: '@srosthai',
   },
@@ -117,7 +115,7 @@ export default function RootLayout({
               "@type": "WebSite",
               "name": "SrosThaiDev Blog",
               "url": "https://blog.srosthai.dev",
-              "description": "Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Develo.",
+              "description": "Discover the latest articles, tutorials, and insights on web development, technology, programming, and Full Stack Developer.",
               "author": {
                 "@type": "Person",
                 "name": "SrosThaiDev"
