@@ -9,7 +9,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, Calendar, FileText, Layers, BookOpen } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { 
+  ArrowLeft, 
+  Calendar, 
+  FileText, 
+  Layers, 
+  BookOpen, 
+  Grid3x3, 
+  List, 
+  Search, 
+  Filter,
+  SortAsc,
+  Eye,
+  Clock,
+  Hash,
+  Tag,
+  Folder,
+  ChevronRight
+} from "lucide-react"
 
 interface Post {
   id: string
@@ -23,6 +41,12 @@ interface Post {
   author: {
     name: string | null
   }
+  category?: {
+    id: string
+    name: string
+    description: string
+    status: boolean
+  } | null
 }
 
 interface PostCategory {
@@ -43,6 +67,10 @@ export default function CategoryPage() {
   const [category, setCategory] = useState<PostCategory | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [sortBy, setSortBy] = useState<'name' | 'posts' | 'recent'>('name')
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchCategoryAndPosts() {
@@ -160,6 +188,125 @@ export default function CategoryPage() {
   }
 
   const publishedPosts = category.posts.filter(post => post.published)
+  
+  // Filter posts by selected category if any
+  const filteredPosts = selectedCategoryId 
+    ? publishedPosts.filter(post => post.category?.id === selectedCategoryId)
+    : publishedPosts
+
+  // Get unique categories from posts in this PostCategory
+  const relatedCategories = publishedPosts
+    .filter(post => post.category && post.category.status)
+    .reduce((acc, post) => {
+      if (post.category && !acc.find(cat => cat.id === post.category!.id)) {
+        acc.push({
+          ...post.category,
+          postCount: publishedPosts.filter(p => p.category?.id === post.category!.id).length
+        })
+      }
+      return acc
+    }, [] as Array<{ id: string; name: string; description: string; status: boolean; postCount: number }>)
+
+  // Filter and sort related categories
+  const filteredCategories = relatedCategories
+    .filter(cat => 
+      cat.name.toLowerCase().includes(categoryFilter.toLowerCase()) ||
+      cat.description.toLowerCase().includes(categoryFilter.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'posts':
+          return b.postCount - a.postCount
+        case 'recent':
+          const aLatest = publishedPosts
+            .filter(p => p.category?.id === a.id)
+            .sort((x, y) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime())[0]
+          const bLatest = publishedPosts
+            .filter(p => p.category?.id === b.id)
+            .sort((x, y) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime())[0]
+          return new Date(bLatest?.createdAt || 0).getTime() - new Date(aLatest?.createdAt || 0).getTime()
+        default:
+          return a.name.localeCompare(b.name)
+      }
+    })
+
+  // Post card component for list view
+  const PostListItem = ({ post }: { post: Post }) => (
+    <Card className="hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20">
+      <CardContent className="p-0">
+        <div className="flex flex-col md:flex-row">
+          {/* Image */}
+          <div className="relative w-full md:w-48 h-48 md:h-32 overflow-hidden bg-gradient-to-br from-primary/10 to-muted/20">
+            {post.image ? (
+              <Image
+                src={post.image}
+                alt={post.title}
+                fill
+                className="object-cover transition-transform duration-300 hover:scale-105"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 p-4 md:p-6">
+            <div className="flex flex-col h-full justify-between">
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-4">
+                  <Link href={`/blog/${post.slug}`} className="group">
+                    <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      {post.title}
+                    </h3>
+                  </Link>
+                  <Badge variant="outline" className="text-xs whitespace-nowrap">
+                    {post.category?.name || 'Uncategorized'}
+                  </Badge>
+                </div>
+                
+                <p className="text-muted-foreground text-sm line-clamp-2">
+                  {post.content.replace(/[#*`]/g, '').substring(0, 120)}...
+                </p>
+              </div>
+              
+              <div className="flex items-center justify-between mt-4 pt-2 border-t border-border/30">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {new Date(post.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Eye className="h-3 w-3" />
+                    {post.author.name}
+                  </div>
+                </div>
+                
+                {post.tags && (
+                  <div className="flex items-center gap-1">
+                    <Hash className="h-3 w-3 text-muted-foreground" />
+                    <div className="flex gap-1">
+                      {post.tags.split(',').slice(0, 2).map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs px-1.5 py-0.5">
+                          {tag.trim()}
+                        </Badge>
+                      ))}
+                      {post.tags.split(',').length > 2 && (
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                          +{post.tags.split(',').length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -228,20 +375,196 @@ export default function CategoryPage() {
             </div>
           </div>
 
-          {/* Posts Section */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">
-                {publishedPosts.length === 0 ? 'No Posts Yet' : 'Latest Posts'}
-              </h2>
-              {publishedPosts.length > 0 && (
-                <Badge variant="outline" className="font-medium">
-                  {publishedPosts.length} {publishedPosts.length === 1 ? 'Post' : 'Posts'}
-                </Badge>
+          {/* Related Categories Section */}
+          {relatedCategories.length > 0 && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Layers className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Related Categories</h2>
+                  <Badge variant="secondary" className="font-medium">
+                    {filteredCategories.length}
+                  </Badge>
+                </div>
+                
+                {/* Search and Filter Controls */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search categories..."
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="pl-10 w-full sm:w-48"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      variant={sortBy === 'name' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSortBy('name')}
+                      className="gap-2"
+                    >
+                      <SortAsc className="h-4 w-4" />
+                      Name
+                    </Button>
+                    <Button
+                      variant={sortBy === 'posts' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSortBy('posts')}
+                      className="gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Posts
+                    </Button>
+                    <Button
+                      variant={sortBy === 'recent' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSortBy('recent')}
+                      className="gap-2"
+                    >
+                      <Clock className="h-4 w-4" />
+                      Recent
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Categories Buttons */}
+              <div className="flex flex-wrap gap-3">
+                {filteredCategories.map((relatedCategory) => (
+                  <Button
+                    key={relatedCategory.id}
+                    variant={selectedCategoryId === relatedCategory.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      if (selectedCategoryId === relatedCategory.id) {
+                        setSelectedCategoryId(null)
+                      } else {
+                        setSelectedCategoryId(relatedCategory.id)
+                      }
+                    }}
+                    className={`
+                      gap-2 h-auto py-2 px-3 text-sm transition-all duration-300
+                      ${selectedCategoryId === relatedCategory.id
+                        ? 'shadow-lg shadow-primary/20 scale-105' 
+                        : 'hover:scale-105 hover:shadow-md'
+                      }
+                    `}
+                  >
+                    <Folder className="h-4 w-4" />
+                    <span>{relatedCategory.name}</span>
+                    <Badge 
+                      variant={selectedCategoryId === relatedCategory.id ? "secondary" : "outline"}
+                      className="text-xs px-1.5 py-0.5 ml-1"
+                    >
+                      {relatedCategory.postCount}
+                    </Badge>
+                    {selectedCategoryId === relatedCategory.id && (
+                      <ChevronRight className="h-3 w-3 ml-1" />
+                    )}
+                  </Button>
+                ))}
+              </div>
+
+              {filteredCategories.length === 0 && categoryFilter && (
+                <Card className="border-dashed border-2">
+                  <CardContent className="text-center py-12">
+                    <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No categories found</h3>
+                    <p className="text-muted-foreground">
+                      No categories match your search "{categoryFilter}"
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setCategoryFilter('')}
+                    >
+                      Clear search
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
             </div>
+          )}
 
-            {publishedPosts.length === 0 ? (
+          {/* Posts Section */}
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-2xl font-bold">
+                  {filteredPosts.length === 0 ? 'No Posts Found' : selectedCategoryId ? 'Filtered Posts' : 'Latest Posts'}
+                </h2>
+                {filteredPosts.length > 0 && (
+                  <Badge variant="outline" className="font-medium">
+                    {filteredPosts.length} {filteredPosts.length === 1 ? 'Post' : 'Posts'}
+                  </Badge>
+                )}
+                {selectedCategoryId && (
+                  <Badge variant="default" className="font-medium">
+                    Filtered by: {filteredCategories.find(cat => cat.id === selectedCategoryId)?.name}
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Controls */}
+              <div className="flex items-center gap-3">
+                {/* Clear Filter Button */}
+                {selectedCategoryId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedCategoryId(null)}
+                    className="gap-2"
+                  >
+                    <Filter className="h-4 w-4" />
+                    Clear Filter
+                  </Button>
+                )}
+                
+                {/* View Toggle */}
+                {filteredPosts.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground">View:</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className={`
+                          gap-2 h-9 px-4 font-medium transition-all duration-300
+                          ${viewMode === 'grid' 
+                            ? 'shadow-lg shadow-primary/20 scale-105' 
+                            : 'hover:scale-105 hover:shadow-md hover:border-primary/50'
+                          }
+                        `}
+                      >
+                        <Grid3x3 className="h-4 w-4" />
+                        Grid
+                      </Button>
+                      <Button
+                        variant={viewMode === 'list' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('list')}
+                        className={`
+                          gap-2 h-9 px-4 font-medium transition-all duration-300
+                          ${viewMode === 'list' 
+                            ? 'shadow-lg shadow-primary/20 scale-105' 
+                            : 'hover:scale-105 hover:shadow-md hover:border-primary/50'
+                          }
+                        `}
+                      >
+                        <List className="h-4 w-4" />
+                        List
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {filteredPosts.length === 0 ? (
               <Card className="max-w-2xl mx-auto border-dashed border-2">
                 <CardContent className="text-center py-16">
                   <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 mb-6">
@@ -250,39 +573,68 @@ export default function CategoryPage() {
                       <BookOpen className="h-12 w-12 text-primary/70 relative" />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 text-foreground">Coming Soon!</h3>
+                  <h3 className="text-2xl font-bold mb-4 text-foreground">
+                    {selectedCategoryId ? 'No Posts in This Category' : 'Coming Soon!'}
+                  </h3>
                   <p className="text-lg text-muted-foreground mb-2">
-                    <span className="font-medium text-primary">{category.name}</span> is ready and waiting for amazing content.
+                    {selectedCategoryId ? (
+                      <>No posts found in <span className="font-medium text-primary">{filteredCategories.find(cat => cat.id === selectedCategoryId)?.name}</span> category.</>
+                    ) : (
+                      <><span className="font-medium text-primary">{category.name}</span> is ready and waiting for amazing content.</>
+                    )}
                   </p>
                   <p className="text-muted-foreground mb-8">
-                    We're working on bringing you fresh articles in this category. Stay tuned!
+                    {selectedCategoryId 
+                      ? 'Try selecting a different category or clear the filter to see all posts.'
+                      : 'We\'re working on bringing you fresh articles in this category. Stay tuned!'
+                    }
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link href="/">
-                      <Button variant="default" className="gap-2">
-                        <Layers className="h-4 w-4" />
-                        Browse Other Categories
+                    {selectedCategoryId ? (
+                      <Button 
+                        variant="default" 
+                        className="gap-2"
+                        onClick={() => setSelectedCategoryId(null)}
+                      >
+                        <Filter className="h-4 w-4" />
+                        Clear Filter & Show All Posts
                       </Button>
-                    </Link>
-                    <Link href="/search">
-                      <Button variant="outline" className="gap-2">
-                        Search All Posts
-                      </Button>
-                    </Link>
+                    ) : (
+                      <>
+                        <Link href="/">
+                          <Button variant="default" className="gap-2">
+                            <Layers className="h-4 w-4" />
+                            Browse Other Categories
+                          </Button>
+                        </Link>
+                        <Link href="/search">
+                          <Button variant="outline" className="gap-2">
+                            Search All Posts
+                          </Button>
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {publishedPosts.map((post) => (
-                  <PostCard key={post.id} {...post} />
+              <div className={viewMode === 'grid' 
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+                : "space-y-6"
+              }>
+                {filteredPosts.map((post) => (
+                  viewMode === 'grid' ? (
+                    <PostCard key={post.id} {...post} />
+                  ) : (
+                    <PostListItem key={post.id} post={post} />
+                  )
                 ))}
               </div>
             )}
           </div>
 
           {/* Bottom Navigation */}
-          {publishedPosts.length > 0 && (
+          {filteredPosts.length > 0 && (
             <div className="text-center py-8">
               <Link href="/">
                 <Button variant="outline" className="gap-2">

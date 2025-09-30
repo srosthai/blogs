@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { title, content, slug, tags, image, published, categoryId } = await request.json()
+    const { title, content, slug, tags, image, published, categoryId, postCategoryId } = await request.json()
 
     // Validate required fields
     if (!title || !content || !slug) {
@@ -91,6 +91,7 @@ export async function POST(request: Request) {
         published: published || false,
         authorId: user.id,
         categoryId: categoryId || null,
+        postCategoryId: postCategoryId || null,
       }
     })
 

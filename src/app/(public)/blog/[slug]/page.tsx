@@ -8,7 +8,8 @@ import rehypeHighlight from 'rehype-highlight'
 import { CodeBlock, InlineCode } from '@/components/CodeBlock'
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Layers, Home } from "lucide-react"
+import BackButton from "@/components/BackButton"
 
 interface Props {
   params: Promise<{
@@ -21,7 +22,8 @@ async function getPost(slug: string) {
     .from('Post')
     .select(`
       *,
-      author:User(name)
+      author:User(name),
+      category:PostCategory(id, name)
     `)
     .eq('slug', slug)
     .eq('published', true)
@@ -148,16 +150,26 @@ export default async function BlogPost({ params }: Props) {
         }}
       />
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto mb-6">
-          <Link href="/">
-            <Button variant="ghost" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Blog List
-            </Button>
-          </Link>
+        <div className="max-w-4xl mx-auto">
+          <BackButton 
+            postCategoryId={post.category?.id || null}
+            postCategoryName={post.category?.name || null}
+          />
         </div>
         <article className="max-w-4xl mx-auto">
         <header className="mb-8">
+          {/* Category Badge */}
+          {post.category && (
+            <div className="mb-4">
+              <Link href={`/category/${post.category.id}`}>
+                <Badge variant="outline" className="hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer">
+                  <Layers className="h-3 w-3 mr-1" />
+                  {post.category.name}
+                </Badge>
+              </Link>
+            </div>
+          )}
+          
           <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
           <div className="flex items-center gap-4 text-muted-foreground mb-4">
             <span>By {post.author?.name || 'Unknown Author'}</span>

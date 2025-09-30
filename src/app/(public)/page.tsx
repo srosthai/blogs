@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Sparkles, Layers, ArrowRight, Calendar, FileText } from "lucide-react"
+import { Sparkles, Layers, ArrowRight, Calendar, FileText, Heart, Star } from "lucide-react"
 
 interface PostCategory {
   id: string
@@ -48,46 +48,29 @@ export default function Home() {
 
   // Component for category card skeleton
   const CategoryCardSkeleton = () => (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300">
-      <div className="relative h-48 w-full">
-        <Skeleton className="h-full w-full" />
-      </div>
-      <CardHeader className="space-y-2">
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-      </CardHeader>
-      <CardFooter className="pt-0">
-        <div className="flex items-center justify-between w-full">
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-24" />
+    <Card className="h-full overflow-hidden bg-white dark:bg-card border border-border/30 rounded-2xl flex flex-col">
+      <div className="relative p-3">
+        <Skeleton className="h-45 w-full rounded-xl" />
+        {/* Heart icon skeleton */}
+        <div className="absolute top-5 right-5">
+          <Skeleton className="w-7 h-7 rounded-full" />
         </div>
-      </CardFooter>
+      </div>
+      <div className="px-4 pb-4 pt-1 space-y-3 flex-1 flex flex-col">
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+        <Skeleton className="h-8 w-full flex-1" />
+        <div className="flex items-center justify-between pt-1 mt-auto">
+          <div className="space-y-0.5">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <Skeleton className="h-7 w-20 rounded-xl" />
+        </div>
+      </div>
     </Card>
   )
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-12">
-          <div className="space-y-12">
-            {/* Header skeleton */}
-            <div className="text-center space-y-4">
-              <Skeleton className="h-12 w-80 mx-auto" />
-              <Skeleton className="h-6 w-96 mx-auto" />
-            </div>
-
-            {/* Categories grid skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <CategoryCardSkeleton key={i} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -111,13 +94,13 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground font-medium">
-                  {postCategories.length} Categories
+                  {loading ? '...' : postCategories.length} Categories
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground font-medium">
-                  {postCategories.reduce((acc, cat) => acc + (cat._count?.posts || 0), 0)} Total Posts
+                  {loading ? '...' : postCategories.reduce((acc, cat) => acc + (cat._count?.posts || 0), 0)} Total Posts
                 </span>
               </div>
             </div>
@@ -125,7 +108,13 @@ export default function Home() {
 
           {/* Categories Grid */}
           <div className="max-w-7xl mx-auto">
-            {postCategories.length === 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <CategoryCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : postCategories.length === 0 ? (
               <Card className="max-w-md mx-auto">
                 <CardContent className="text-center py-16">
                   <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
@@ -138,85 +127,70 @@ export default function Home() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {postCategories.map((category) => (
                   <Link 
                     key={category.id} 
                     href={`/category/${category.id}`}
-                    className="group"
+                    className="group block h-full"
                   >
-                    <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-muted/50 bg-card/50 backdrop-blur">
-                      {/* Category Image */}
-                      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-                        {category.image ? (
-                          <Image
-                            src={category.image}
-                            alt={category.name}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
-                              <Layers className="h-16 w-16 text-primary/60 relative" />
+                    <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer bg-white dark:bg-card border border-border/30 rounded-2xl hover:-translate-y-1 flex flex-col">
+                      {/* Category Image with Heart Icon */}
+                      <div className="relative p-3">
+                        <div className="relative h-45 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm">
+                          {category.image ? (
+                            <Image
+                              src={category.image}
+                              alt={category.name}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-500 rounded-xl"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full rounded-xl">
+                              <div className="relative">
+                                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
+                                <Layers className="h-10 w-10 text-primary/60 relative" />
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {/* Overlay gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-60"></div>
+                          )}
+                          {/* Subtle overlay for better contrast */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/5 rounded-xl"></div>
+                        </div>
                       </div>
 
-                      <CardHeader className="space-y-2">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors line-clamp-1">
+                      {/* Card Content */}
+                      <div className="px-4 pb-4 pt-1 space-y-3 flex-1 flex flex-col">
+                        {/* Title and Rating */}
+                        <div className="space-y-1.5">
+                          <h3 className="font-semibold text-base line-clamp-1 group-hover:text-primary transition-colors leading-tight">
                             {category.name}
-                          </CardTitle>
-                          <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                          </h3>
                         </div>
-                        <CardDescription className="line-clamp-2 text-sm">
-                          {category.description || "Explore articles in this category"}
-                        </CardDescription>
-                      </CardHeader>
 
-                      <CardFooter className="pt-0 pb-4">
-                        <div className="flex items-center justify-between w-full">
-                          <Badge variant="secondary" className="font-medium">
-                            <FileText className="h-3 w-3 mr-1" />
-                            {category._count?.posts || 0} Posts
-                          </Badge>
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {new Date(category.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              year: 'numeric'
-                            })}
+                        {/* Description */}
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed flex-1">
+                          {category.description || "Explore articles and insights in this category"}
+                        </p>
+
+                        {/* Bottom Section */}
+                        <div className="flex items-center justify-between pt-1 mt-auto">
+                          <div className="space-y-0.5">
+                            <div className="text-xs text-muted-foreground font-medium tracking-wide">ARTICLES FROM</div>
+                            <div className="font-semibold text-sm">
+                              <span className="text-primary">{category._count?.posts || 0}</span> <span className="text-muted-foreground">- Free</span>
+                            </div>
+                          </div>
+                          <div className="bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer hover:shadow-sm">
+                            View Details
                           </div>
                         </div>
-                      </CardFooter>
+                      </div>
                     </Card>
                   </Link>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Bottom CTA Section */}
-          {postCategories.length > 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                Can't find what you're looking for?
-              </p>
-              <Link href="/search">
-                <Badge 
-                  variant="outline" 
-                  className="px-6 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                >
-                  Search All Posts →
-                </Badge>
-              </Link>
-            </div>
-          )}
         </div>
       </div>
     </div>

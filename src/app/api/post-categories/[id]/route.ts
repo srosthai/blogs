@@ -33,7 +33,9 @@ export async function GET(
           select: {
             name: true
           }
-        }
+        },
+        category: true,
+        postCategory: true
       },
       orderBy: {
         createdAt: 'desc'
