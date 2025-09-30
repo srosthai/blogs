@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -433,9 +434,10 @@ function AdminDashboard() {
                   {/* Image Section */}
                   <div className="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                     {post.image ? (
-                      <img
+                      <Image
                         src={post.image}
                         alt={post.title}
+                        fill
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
