@@ -51,6 +51,12 @@ export const db = {
       if (include.category) {
         selectFields = `*, category:Category(*)`
       }
+      if (include.postCategory) {
+        selectFields = `*, postCategory:PostCategory(*)`
+      }
+      if (include.category && include.postCategory) {
+        selectFields = `*, category:Category(*), postCategory:PostCategory(*)`
+      }
       
       let query = supabase.from('Post').select(selectFields)
       
@@ -65,6 +71,9 @@ export const db = {
       }
       if (where.categoryId) {
         query = query.eq('categoryId', where.categoryId)
+      }
+      if (where.postCategoryId) {
+        query = query.eq('postCategoryId', where.postCategoryId)
       }
       
       if (orderBy.createdAt) {
@@ -83,6 +92,12 @@ export const db = {
       // Include category information if requested
       if (include?.category) {
         selectFields = `*, category:Category(*)`
+      }
+      if (include?.postCategory) {
+        selectFields = `*, postCategory:PostCategory(*)`
+      }
+      if (include?.category && include?.postCategory) {
+        selectFields = `*, category:Category(*), postCategory:PostCategory(*)`
       }
       
       const { data, error } = await supabase
@@ -105,6 +120,7 @@ export const db = {
         published: data.published || false,
         authorId: data.authorId,
         categoryId: data.categoryId || null,
+        postCategoryId: data.postCategoryId || null,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -129,6 +145,7 @@ export const db = {
         image: data.image || null,
         published: data.published,
         categoryId: data.categoryId || null,
+        postCategoryId: data.postCategoryId || null,
         updatedAt: new Date().toISOString()
       }
       
@@ -229,6 +246,90 @@ export const db = {
     delete: async ({ where }: { where: { id: string } }) => {
       const { error } = await supabase
         .from('Category')
+        .delete()
+        .eq('id', where.id)
+      
+      if (error) throw error
+    }
+  },
+
+  postCategory: {
+    findMany: async ({ where = {}, orderBy = {} }: { where?: any; orderBy?: any } = {}) => {
+      let query = supabase.from('PostCategory').select('*')
+      
+      if (where.status !== undefined) {
+        query = query.eq('status', where.status)
+      }
+      if (where.name) {
+        query = query.ilike('name', `%${where.name}%`)
+      }
+      
+      if (orderBy.createdAt) {
+        query = query.order('createdAt', { ascending: orderBy.createdAt === 'asc' })
+      } else if (orderBy.name) {
+        query = query.order('name', { ascending: orderBy.name === 'asc' })
+      } else {
+        query = query.order('createdAt', { ascending: false })
+      }
+      
+      const { data, error } = await query
+      
+      if (error) throw error
+      return data || []
+    },
+    
+    findUnique: async ({ where }: { where: { id: string } }) => {
+      const { data, error } = await supabase
+        .from('PostCategory')
+        .select('*')
+        .eq('id', where.id)
+        .single()
+      
+      if (error) return null
+      return data
+    },
+    
+    create: async ({ data }: { data: any }) => {
+      const postCategoryData = {
+        name: data.name,
+        description: data.description || '',
+        image: data.image || null,
+        status: data.status !== undefined ? Boolean(data.status) : true,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      
+      const { data: postCategory, error } = await supabase
+        .from('PostCategory')
+        .insert(postCategoryData)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return postCategory
+    },
+    
+    update: async ({ where, data }: { where: { id: string }; data: any }) => {
+      const updateData = {
+        ...data,
+        updatedAt: new Date().toISOString()
+      }
+      
+      const { data: postCategory, error } = await supabase
+        .from('PostCategory')
+        .update(updateData)
+        .eq('id', where.id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return postCategory
+    },
+    
+    delete: async ({ where }: { where: { id: string } }) => {
+      const { error } = await supabase
+        .from('PostCategory')
         .delete()
         .eq('id', where.id)
       

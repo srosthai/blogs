@@ -52,7 +52,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-interface Category {
+interface PostCategory {
   id: string
   name: string
   description: string
@@ -62,8 +62,8 @@ interface Category {
   updatedAt: string
 }
 
-export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([])
+export default function PostCategoriesPage() {
+  const [postCategories, setPostCategories] = useState<PostCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
@@ -71,10 +71,10 @@ export default function CategoriesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchCategories()
+    fetchPostCategories()
   }, [])
 
-  const fetchCategories = async () => {
+  const fetchPostCategories = async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams()
@@ -83,15 +83,15 @@ export default function CategoriesPage() {
         params.append('status', statusFilter === 'active' ? 'true' : 'false')
       }
       
-      const response = await fetch(`/api/admin/categories?${params}`)
+      const response = await fetch(`/api/admin/post-categories?${params}`)
       if (response.ok) {
         const data = await response.json()
-        setCategories(data)
+        setPostCategories(data)
       } else {
-        toast.error('Failed to load categories')
+        toast.error('Failed to load post categories')
       }
     } catch (error) {
-      toast.error('An error occurred while loading categories')
+      toast.error('An error occurred while loading post categories')
     } finally {
       setLoading(false)
     }
@@ -99,86 +99,86 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     const delayedFetch = setTimeout(() => {
-      fetchCategories()
+      fetchPostCategories()
     }, 300)
     
     return () => clearTimeout(delayedFetch)
   }, [searchTerm, statusFilter])
 
-  const toggleStatus = async (categoryId: string, currentStatus: boolean) => {
+  const toggleStatus = async (postCategoryId: string, currentStatus: boolean) => {
     const newStatus = !currentStatus
     const action = newStatus ? 'activating' : 'deactivating'
-    const loadingToast = toast.loading(`${action.charAt(0).toUpperCase() + action.slice(1)} category...`)
+    const loadingToast = toast.loading(`${action.charAt(0).toUpperCase() + action.slice(1)} post category...`)
 
     try {
-      const category = categories.find(c => c.id === categoryId)
-      if (!category || !category.name) return
+      const postCategory = postCategories.find(c => c.id === postCategoryId)
+      if (!postCategory || !postCategory.name) return
 
-      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+      const response = await fetch(`/api/admin/post-categories/${postCategoryId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: category.name,
-          description: category.description || '',
-          image: category.image || '',
+          name: postCategory.name,
+          description: postCategory.description || '',
+          image: postCategory.image || '',
           status: newStatus
         }),
       })
 
       if (response.ok) {
         toast.dismiss(loadingToast)
-        toast.success(`Category ${newStatus ? 'activated' : 'deactivated'} successfully!`)
-        fetchCategories()
+        toast.success(`Post category ${newStatus ? 'activated' : 'deactivated'} successfully!`)
+        fetchPostCategories()
       } else {
         toast.dismiss(loadingToast)
-        toast.error('Failed to update category status')
+        toast.error('Failed to update post category status')
       }
     } catch (error) {
       toast.dismiss(loadingToast)
-      toast.error('An error occurred while updating the category')
+      toast.error('An error occurred while updating the post category')
     }
   }
 
-  const deleteCategory = async (categoryId: string) => {
-    const loadingToast = toast.loading('Deleting category...')
+  const deletePostCategory = async (postCategoryId: string) => {
+    const loadingToast = toast.loading('Deleting post category...')
 
     try {
-      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+      const response = await fetch(`/api/admin/post-categories/${postCategoryId}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
         toast.dismiss(loadingToast)
-        toast.success('Category deleted successfully!')
-        fetchCategories()
+        toast.success('Post category deleted successfully!')
+        fetchPostCategories()
         setDeleteId(null)
       } else {
         toast.dismiss(loadingToast)
-        toast.error('Failed to delete category')
+        toast.error('Failed to delete post category')
       }
     } catch (error) {
       toast.dismiss(loadingToast)
-      toast.error('An error occurred while deleting the category')
+      toast.error('An error occurred while deleting the post category')
     }
   }
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter(category => {
-      const matchesSearch = (category?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (category?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPostCategories = useMemo(() => {
+    return postCategories.filter(postCategory => {
+      const matchesSearch = (postCategory?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (postCategory?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = statusFilter === "all" ||
-        (statusFilter === "active" && category.status === true) ||
-        (statusFilter === "inactive" && category.status === false)
+        (statusFilter === "active" && postCategory.status === true) ||
+        (statusFilter === "inactive" && postCategory.status === false)
       return matchesSearch && matchesStatus
     })
-  }, [categories, searchTerm, statusFilter])
+  }, [postCategories, searchTerm, statusFilter])
 
   if (loading) {
     return (
       <div className="p-6">
-        <div className="text-center">Loading categories...</div>
+        <div className="text-center">Loading post categories...</div>
       </div>
     )
   }
@@ -187,13 +187,13 @@ export default function CategoriesPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Categories</h1>
-          <p className="text-muted-foreground">Manage your blog categories</p>
+          <h1 className="text-3xl font-bold">Post Categories</h1>
+          <p className="text-muted-foreground">Manage your blog post categories</p>
         </div>
-        <Link href="/admin/categories/new">
+        <Link href="/admin/post-categories/new">
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            New Category
+            New Post Category
           </Button>
         </Link>
       </div>
@@ -203,7 +203,7 @@ export default function CategoriesPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search categories..."
+            placeholder="Search post categories..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -251,14 +251,14 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {filteredCategories.length === 0 ? (
+      {filteredPostCategories.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">
-            {categories.length === 0 ? "No categories found. Create your first category!" : "No categories match your search criteria."}
+            {postCategories.length === 0 ? "No post categories found. Create your first post category!" : "No post categories match your search criteria."}
           </p>
-          {categories.length === 0 ? (
-            <Link href="/admin/categories/new">
-              <Button>Create your first category</Button>
+          {postCategories.length === 0 ? (
+            <Link href="/admin/post-categories/new">
+              <Button>Create your first post category</Button>
             </Link>
           ) : (
             <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
@@ -282,14 +282,14 @@ export default function CategoriesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCategories.map((category) => (
-                    <TableRow key={category.id}>
+                  {filteredPostCategories.map((postCategory) => (
+                    <TableRow key={postCategory.id}>
                       <TableCell>
-                        {category.image ? (
+                        {postCategory.image ? (
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                             <Image
-                              src={category.image}
-                              alt={category.name}
+                              src={postCategory.image}
+                              alt={postCategory.name}
                               fill
                               className="object-cover"
                             />
@@ -300,17 +300,17 @@ export default function CategoriesPage() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium">{category?.name || 'Unnamed Category'}</TableCell>
+                      <TableCell className="font-medium">{postCategory?.name || 'Unnamed Post Category'}</TableCell>
                       <TableCell className="text-muted-foreground max-w-xs truncate">
-                        {category.description || "No description"}
+                        {postCategory.description || "No description"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={category.status ? "default" : "secondary"}>
-                          {category.status ? "Active" : "Inactive"}
+                        <Badge variant={postCategory.status ? "default" : "secondary"}>
+                          {postCategory.status ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {new Date(category.createdAt).toLocaleDateString()}
+                        {new Date(postCategory.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -321,15 +321,15 @@ export default function CategoriesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/admin/categories/edit/${category.id}`}>
+                              <Link href={`/admin/post-categories/edit/${postCategory.id}`}>
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => toggleStatus(category.id, category.status)}
+                              onClick={() => toggleStatus(postCategory.id, postCategory.status)}
                             >
-                              {category.status ? (
+                              {postCategory.status ? (
                                 <>
                                   <EyeOff className="w-4 h-4 mr-2" />
                                   Deactivate
@@ -342,7 +342,7 @@ export default function CategoriesPage() {
                               )}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => setDeleteId(category.id)}
+                              onClick={() => setDeleteId(postCategory.id)}
                               className="text-destructive"
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
@@ -358,14 +358,14 @@ export default function CategoriesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredCategories.map((category) => (
-                <Card key={category.id} className="group hover:shadow-md transition-shadow">
+              {filteredPostCategories.map((postCategory) => (
+                <Card key={postCategory.id} className="group hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
-                        <CardTitle className="text-lg">{category?.name || 'Unnamed Category'}</CardTitle>
-                        <Badge variant={category.status ? "default" : "secondary"} className="w-fit">
-                          {category.status ? "Active" : "Inactive"}
+                        <CardTitle className="text-lg">{postCategory?.name || 'Unnamed Post Category'}</CardTitle>
+                        <Badge variant={postCategory.status ? "default" : "secondary"} className="w-fit">
+                          {postCategory.status ? "Active" : "Inactive"}
                         </Badge>
                       </div>
                       <DropdownMenu>
@@ -376,15 +376,15 @@ export default function CategoriesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/admin/categories/edit/${category.id}`}>
+                            <Link href={`/admin/post-categories/edit/${postCategory.id}`}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => toggleStatus(category.id, category.status)}
+                            onClick={() => toggleStatus(postCategory.id, postCategory.status)}
                           >
-                            {category.status ? (
+                            {postCategory.status ? (
                               <>
                                 <EyeOff className="w-4 h-4 mr-2" />
                                 Deactivate
@@ -397,7 +397,7 @@ export default function CategoriesPage() {
                             )}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setDeleteId(category.id)}
+                            onClick={() => setDeleteId(postCategory.id)}
                             className="text-destructive"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -408,22 +408,22 @@ export default function CategoriesPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {category.image && (
+                    {postCategory.image && (
                       <div className="relative w-full h-32 rounded-lg overflow-hidden mb-4 bg-gray-100 dark:bg-gray-800">
                         <Image
-                          src={category.image}
-                          alt={category.name}
+                          src={postCategory.image}
+                          alt={postCategory.name}
                           fill
                           className="object-cover"
                         />
                       </div>
                     )}
                     <CardDescription className="line-clamp-3">
-                      {category.description || "No description available"}
+                      {postCategory.description || "No description available"}
                     </CardDescription>
                   </CardContent>
                   <CardFooter className="text-sm text-muted-foreground">
-                    Created {new Date(category.createdAt).toLocaleDateString()}
+                    Created {new Date(postCategory.createdAt).toLocaleDateString()}
                   </CardFooter>
                 </Card>
               ))}
@@ -437,13 +437,13 @@ export default function CategoriesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the category.
+              This action cannot be undone. This will permanently delete the post category.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteId && deleteCategory(deleteId)}
+              onClick={() => deleteId && deletePostCategory(deleteId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete

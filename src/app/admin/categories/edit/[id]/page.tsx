@@ -111,6 +111,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
     }))
   }
 
+
   if (fetchLoading) {
     return (
       <div className="p-6 max-w-2xl mx-auto">
@@ -161,6 +162,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
                 rows={4}
               />
             </div>
+
 
             <div className="flex items-center space-x-2">
               <Switch

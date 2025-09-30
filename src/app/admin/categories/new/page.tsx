@@ -65,6 +65,7 @@ export default function NewCategoryPage() {
     }))
   }
 
+
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
@@ -107,6 +108,7 @@ export default function NewCategoryPage() {
                 rows={4}
               />
             </div>
+
 
             <div className="flex items-center space-x-2">
               <Switch

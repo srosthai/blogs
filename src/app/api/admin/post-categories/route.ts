@@ -27,15 +27,16 @@ export async function GET(request: NextRequest) {
     const orderBy: any = {}
     orderBy[sortBy] = sortOrder
 
-    const categories = await db.category.findMany({
+    const postCategories = await db.postCategory.findMany({
       where,
       orderBy
     })
 
-    return NextResponse.json(categories)
+    return NextResponse.json(postCategories)
   } catch (error) {
+    console.error('Fetch post categories error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch categories' },
+      { error: 'Failed to fetch post categories' },
       { status: 500 }
     )
   }
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, status } = body
+    const { name, description, image, status } = body
 
     if (!name) {
       return NextResponse.json(
@@ -58,19 +59,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const category = await db.category.create({
+    const postCategory = await db.postCategory.create({
       data: {
         name,
         description: description || '',
+        image: image || null,
         status: status !== undefined ? Boolean(status) : true
       }
     })
 
-    return NextResponse.json(category, { status: 201 })
+    return NextResponse.json(postCategory, { status: 201 })
   } catch (error) {
-    console.error('Create category error:', error)
+    console.error('Create post category error:', error)
     return NextResponse.json(
-      { error: 'Failed to create category' },
+      { error: 'Failed to create post category' },
       { status: 500 }
     )
   }

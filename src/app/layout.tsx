@@ -103,10 +103,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="canonical" href="https://blog.srosthai.dev" />
-        {/* Replace with your actual Google Search Console verification code */}
-        {/* <meta name="google-site-verification" content="your-google-verification-code" /> */}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
+      >
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -136,11 +136,6 @@ export default function RootLayout({
             })
           }}
         />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
-      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

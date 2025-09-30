@@ -18,14 +18,14 @@ import {
 } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
 
-interface Category {
+interface PostCategory {
   id: string
   name: string
   image?: string
   status: boolean
 }
 
-interface CategorySelectProps {
+interface PostCategorySelectProps {
   value?: string | null
   onValueChange: (value: string | null) => void
   label?: string
@@ -35,37 +35,37 @@ interface CategorySelectProps {
   className?: string
 }
 
-export function CategorySelect({ 
+export function PostCategorySelect({ 
   value, 
   onValueChange, 
-  label = "Category",
-  placeholder = "Select a category",
+  label = "Post Category",
+  placeholder = "Select a post category",
   required = false,
   searchable = true,
   className
-}: CategorySelectProps) {
-  const [categories, setCategories] = useState<Category[]>([])
+}: PostCategorySelectProps) {
+  const [postCategories, setPostCategories] = useState<PostCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState("")
 
   useEffect(() => {
-    fetchCategories()
+    fetchPostCategories()
   }, [])
 
-  const selectedCategory = categories.find(cat => cat.id === value)
+  const selectedPostCategory = postCategories.find(cat => cat.id === value)
   
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchValue.toLowerCase())
+  const filteredPostCategories = postCategories.filter(postCategory =>
+    postCategory.name.toLowerCase().includes(searchValue.toLowerCase())
   )
 
-  const fetchCategories = async () => {
+  const fetchPostCategories = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/categories?status=true')
+      const response = await fetch('/api/admin/post-categories?status=true')
       if (response.ok) {
         const data = await response.json()
-        setCategories(data)
+        setPostCategories(data)
       }
     } catch (error) {
       // Silently handle error
@@ -74,11 +74,11 @@ export function CategorySelect({
     }
   }
 
-  const handleSelect = (categoryId: string) => {
-    if (categoryId === value) {
+  const handleSelect = (postCategoryId: string) => {
+    if (postCategoryId === value) {
       onValueChange(null)
     } else {
-      onValueChange(categoryId === "none" ? null : categoryId)
+      onValueChange(postCategoryId === "none" ? null : postCategoryId)
     }
     setOpen(false)
   }
@@ -91,7 +91,7 @@ export function CategorySelect({
   return (
     <div className={cn("space-y-2", className)}>
       {label && (
-        <Label htmlFor="category">
+        <Label htmlFor="post-category">
           {label}
           {required && <span className="text-destructive ml-1">*</span>}
         </Label>
@@ -108,12 +108,12 @@ export function CategorySelect({
             <span className="truncate">
               {loading
                 ? "Loading..."
-                : selectedCategory
-                ? selectedCategory.name
+                : selectedPostCategory
+                ? selectedPostCategory.name
                 : placeholder}
             </span>
             <div className="flex items-center gap-1">
-              {selectedCategory && (
+              {selectedPostCategory && (
                 <X
                   className="h-4 w-4 opacity-50 hover:opacity-100 transition-opacity"
                   onClick={clearSelection}
@@ -127,14 +127,14 @@ export function CategorySelect({
           <Command>
             {searchable && (
               <CommandInput
-                placeholder="Search categories..."
+                placeholder="Search post categories..."
                 className="h-9"
                 value={searchValue}
                 onValueChange={setSearchValue}
               />
             )}
-            <CommandEmpty style={{ display: filteredCategories.length === 0 ? 'block' : 'none' }}>
-              No category found.
+            <CommandEmpty style={{ display: filteredPostCategories.length === 0 ? 'block' : 'none' }}>
+              No post category found.
             </CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
               <CommandItem
@@ -147,22 +147,22 @@ export function CategorySelect({
                     !value ? "opacity-100" : "opacity-0"
                   )}
                 />
-                <span className="text-muted-foreground">No Category</span>
+                <span className="text-muted-foreground">No Post Category</span>
               </CommandItem>
-              {filteredCategories.map((category) => (
+              {filteredPostCategories.map((postCategory) => (
                 <CommandItem
-                  key={category.id}
-                  onSelect={() => handleSelect(category.id)}
+                  key={postCategory.id}
+                  onSelect={() => handleSelect(postCategory.id)}
                   className="flex items-center gap-2"
                 >
                   <Check
                     className={cn(
                       "h-4 w-4",
-                      value === category.id ? "opacity-100" : "opacity-0"
+                      value === postCategory.id ? "opacity-100" : "opacity-0"
                     )}
                   />
                   <span className="truncate">
-                    {category?.name || 'Unnamed Category'}
+                    {postCategory?.name || 'Unnamed Post Category'}
                   </span>
                 </CommandItem>
               ))}

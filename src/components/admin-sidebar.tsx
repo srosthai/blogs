@@ -13,7 +13,9 @@ import {
   PenSquare,
   ChevronRight,
   Tags,
-  FolderOpen
+  FolderOpen,
+  Grid3X3,
+  Folder
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
@@ -58,8 +60,13 @@ const menuItems = [
       },
       {
         title: "Categories",
-        icon: FolderOpen,
+        icon: Folder,
         href: "/admin/categories",
+      },
+      {
+        title: "Post Categories",
+        icon: Grid3X3,
+        href: "/admin/post-categories",
       },
     ],
   },

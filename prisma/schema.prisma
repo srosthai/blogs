@@ -23,6 +23,7 @@ model Category {
   id          String   @id @default(cuid())
   name        String   @unique
   description String?
+  image       String?
   status      Int      @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -31,18 +32,33 @@ model Category {
   @@map("categories")
 }
 
+model PostCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  image       String?
+  status      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  posts       Post[]
+
+  @@map("post_categories")
+}
+
 model Post {
-  id         String    @id @default(cuid())
-  title      String
-  content    String
-  slug       String    @unique
-  tags       String
-  published  Boolean   @default(false)
-  authorId   String
-  categoryId String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  image      String?
-  author     User      @relation(fields: [authorId], references: [id])
-  category   Category? @relation(fields: [categoryId], references: [id])
+  id             String        @id @default(cuid())
+  title          String
+  content        String
+  slug           String        @unique
+  tags           String
+  published      Boolean       @default(false)
+  authorId       String
+  categoryId     String?
+  postCategoryId String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  image          String?
+  author         User          @relation(fields: [authorId], references: [id])
+  category       Category?     @relation(fields: [categoryId], references: [id])
+  postCategory   PostCategory? @relation(fields: [postCategoryId], references: [id])
 }

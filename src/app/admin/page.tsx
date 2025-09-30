@@ -159,103 +159,192 @@ function AdminDashboard() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="text-center">Loading your posts...</div>
-      </div>
-    )
-  }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {session?.user?.name}</p>
-        </div>
-        <Link href="/admin/new">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            New Post
-          </Button>
-        </Link>
-      </div>
-
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search posts by title, tags, or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {/* Status Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                <Filter className="w-4 h-4 mr-2" />
-                {statusFilter === "all" ? "All Posts" : statusFilter === "published" ? "Published" : "Draft"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setStatusFilter("all")}>
-                All Posts
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("published")}>
-                Published Only
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("draft")}>
-                Draft Only
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* View Mode Toggle */}
-          <div className="flex border rounded-md">
-            <Button
-              variant={viewMode === "table" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("table")}
-              className="rounded-r-none"
-            >
-              <TableProperties className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              className="rounded-l-none"
-            >
-              <Grid3X3 className="w-4 h-4" />
-            </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header Section */}
+      <div className="border-b bg-white dark:bg-gray-950">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-4xl font-bold tracking-tight">Admin Dashboard</h1>
+              <p className="text-lg text-muted-foreground">Welcome back, {session?.user?.name}</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/admin/categories">
+                <Button variant="outline" className="h-10">
+                  <Grid3X3 className="w-4 h-4 mr-2" />
+                  Categories
+                </Button>
+              </Link>
+              <Link href="/admin/post-categories">
+                <Button variant="outline" className="h-10">
+                  <Grid3X3 className="w-4 h-4 mr-2" />
+                  Post Categories
+                </Button>
+              </Link>
+              <Link href="/admin/new">
+                <Button className="h-10">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Post
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
-      {posts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">You haven't created any posts yet.</p>
-          <Link href="/admin/new">
-            <Button>Create your first post</Button>
-          </Link>
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-8">
+
+        {/* Search and Filter Controls */}
+        <div className="space-y-4 mb-8">
+          {/* Search Row */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search posts by title, tags, or category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11"
+              />
+            </div>
+          </div>
+          
+          {/* Filter and View Toggle Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {/* Status Filter */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-10 min-w-[140px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    {statusFilter === "all" ? "All Posts" : statusFilter === "published" ? "Published" : "Draft"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setStatusFilter("all")}>
+                    All Posts
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("published")}>
+                    Published Only
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("draft")}>
+                    Draft Only
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "table" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+                className="h-10 px-4"
+              >
+                <TableProperties className="w-4 h-4 mr-2" />
+                Table
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                className="h-10 px-4"
+              >
+                <Grid3X3 className="w-4 h-4 mr-2" />
+                Grid
+              </Button>
+            </div>
+          </div>
         </div>
-      ) : filteredPosts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">No posts match your search criteria.</p>
-          <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
-            Clear filters
-          </Button>
-        </div>
-      ) : (
+
+        {loading ? (
+          // Loading Skeleton
+          <div className="space-y-6">
+            {viewMode === "table" ? (
+              <div className="rounded-lg border bg-white dark:bg-gray-950 shadow-sm">
+                <div className="p-4">
+                  {/* Table Header Skeleton */}
+                  <div className="flex items-center gap-4 mb-4 pb-3 border-b">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-24 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-20 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-16 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-20 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-16 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-12 animate-pulse ml-auto"></div>
+                  </div>
+                  {/* Table Rows Skeleton */}
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 py-4 border-b last:border-b-0">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded flex-1 max-w-xs animate-pulse"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-20 animate-pulse"></div>
+                      <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-16 animate-pulse"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-20 animate-pulse"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-16 animate-pulse"></div>
+                      <div className="h-8 w-8 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+                    {/* Image Skeleton */}
+                    <div className="aspect-video w-full bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+                    {/* Content Skeleton */}
+                    <div className="p-4 space-y-3">
+                      <div className="space-y-2">
+                        <div className="h-5 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4 animate-pulse"></div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-20 animate-pulse"></div>
+                      </div>
+                      <div className="flex gap-1 pt-2">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-12 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-10 animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="mx-auto max-w-md">
+              <div className="text-6xl mb-4">📝</div>
+              <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
+              <p className="text-muted-foreground mb-6">You haven't created any posts yet. Get started by creating your first post.</p>
+              <Link href="/admin/new">
+                <Button size="lg">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create your first post
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="mx-auto max-w-md">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-xl font-semibold mb-2">No results found</h3>
+              <p className="text-muted-foreground mb-6">No posts match your search criteria. Try adjusting your filters.</p>
+              <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
+                Clear filters
+              </Button>
+            </div>
+          </div>
+        ) : (
         <>
           {viewMode === "table" ? (
-            <div className="rounded-md border">
+            <div className="rounded-lg border bg-white dark:bg-gray-950 shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -330,9 +419,9 @@ function AdminDashboard() {
               </Table>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {paginatedPosts.map((post) => (
-                <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-0 bg-white dark:bg-gray-900">
+                <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800">
                   {/* Image Section */}
                   <div className="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                     {post.image ? (
@@ -448,18 +537,20 @@ function AdminDashboard() {
           )}
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-6">
-            <p className="text-sm text-muted-foreground">
-              Showing {startIndex + 1}-{Math.min(startIndex + postsPerPage, filteredPosts.length)} of {filteredPosts.length} posts
-            </p>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        </>
-      )}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 pt-6 border-t">
+              <p className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{Math.min(startIndex + postsPerPage, filteredPosts.length)} of {filteredPosts.length} posts
+              </p>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
+        </>)}
+      </div>
 
       <AlertDialog open={!!deletePostId} onOpenChange={() => setDeletePostId(null)}>
         <AlertDialogContent>
