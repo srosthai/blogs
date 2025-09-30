@@ -1,162 +1,88 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { PostCard } from "@/components/PostCard"
-import { Card, CardContent } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Sparkles, BookOpen, Search, ChevronDown } from "lucide-react"
-import { useSearchParams } from "next/navigation"
+import { Sparkles, Layers, ArrowRight, Calendar, FileText } from "lucide-react"
 
-interface Post {
+interface PostCategory {
   id: string
-  title: string
-  content: string
-  slug: string
-  tags: string
+  name: string
+  description: string
   image?: string | null
-  published: boolean
+  status: boolean
   createdAt: string
-  categoryId?: string | null
-  category?: {
-    id: string
-    name: string
-  } | null
-  author: {
-    name: string | null
+  updatedAt: string
+  _count?: {
+    posts: number
   }
 }
 
-interface Category {
-  id: string
-  name: string
-  status: boolean
-}
-
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [postCategories, setPostCategories] = useState<PostCategory[]>([])
   const [loading, setLoading] = useState(true)
-  const [categoryLoading, setCategoryLoading] = useState(false)
-  const [showAllPosts, setShowAllPosts] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const searchParams = useSearchParams()
-  const searchQuery = searchParams.get('search') || ''
 
-  // Filter posts based on search query and category
-  const filteredPosts = useMemo(() => {
-    let filtered = posts
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(post => 
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (post.tags && post.tags.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    }
-
-    // Apply category filter
-    if (selectedCategory) {
-      filtered = filtered.filter(post => post.categoryId === selectedCategory)
-    }
-
-    return filtered
-  }, [posts, searchQuery, selectedCategory])
-
-  // Get posts to display (limited to 6 unless showAllPosts is true or we're filtering)
-  const postsToDisplay = useMemo(() => {
-    const isFiltering = searchQuery || selectedCategory
-    if (isFiltering || showAllPosts) {
-      return filteredPosts
-    }
-    return filteredPosts.slice(0, 6)
-  }, [filteredPosts, searchQuery, selectedCategory, showAllPosts])
-
-  // Fetch posts and categories on component mount
+  // Fetch post categories on component mount
   useEffect(() => {
-    async function fetchData() {
+    async function fetchPostCategories() {
       try {
-        // Fetch posts
-        const postsResponse = await fetch('/api/posts')
-        if (postsResponse.ok) {
-          const postsData = await postsResponse.json()
-          setPosts(postsData)
-        }
-
-        // Fetch categories
-        const categoriesResponse = await fetch('/api/admin/categories?status=true')
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json()
-          setCategories(categoriesData)
+        const response = await fetch('/api/post-categories')
+        if (response.ok) {
+          const data = await response.json()
+          // Only show active categories
+          const activeCategories = data.filter((cat: PostCategory) => cat.status)
+          setPostCategories(activeCategories)
         }
       } catch (error) {
-        console.error('Error fetching data:', error)
+        console.error('Error fetching post categories:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchData()
+    fetchPostCategories()
   }, [])
 
-  // Reset showAllPosts when category changes
-  useEffect(() => {
-    if (selectedCategory !== null) {
-      setShowAllPosts(false)
-    }
-  }, [selectedCategory])
-
-  // Component for post card skeleton
-  const PostCardSkeleton = () => (
-    <Card className="overflow-hidden">
-      <Skeleton className="h-48 w-full" />
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <Skeleton className="h-6 w-3/4" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-          </div>
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16" />
-          </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-6 w-12 rounded-full" />
-            <Skeleton className="h-6 w-16 rounded-full" />
-          </div>
+  // Component for category card skeleton
+  const CategoryCardSkeleton = () => (
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300">
+      <div className="relative h-48 w-full">
+        <Skeleton className="h-full w-full" />
+      </div>
+      <CardHeader className="space-y-2">
+        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </CardHeader>
+      <CardFooter className="pt-0">
+        <div className="flex items-center justify-between w-full">
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-5 w-24" />
         </div>
-      </CardContent>
+      </CardFooter>
     </Card>
   )
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          {/* Header skeleton */}
-          <div className="text-center space-y-4">
-            <Skeleton className="h-12 w-64 mx-auto" />
-            <Skeleton className="h-4 w-96 mx-auto" />
-          </div>
-
-          {/* Category filter skeleton */}
-          <div className="flex justify-center">
-            <div className="flex flex-wrap gap-2">
-              <Skeleton className="h-8 w-24 rounded-full" />
-              <Skeleton className="h-8 w-20 rounded-full" />
-              <Skeleton className="h-8 w-28 rounded-full" />
-              <Skeleton className="h-8 w-22 rounded-full" />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-12">
+          <div className="space-y-12">
+            {/* Header skeleton */}
+            <div className="text-center space-y-4">
+              <Skeleton className="h-12 w-80 mx-auto" />
+              <Skeleton className="h-6 w-96 mx-auto" />
             </div>
-          </div>
 
-          {/* Posts grid skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <PostCardSkeleton key={i} />
-            ))}
+            {/* Categories grid skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <CategoryCardSkeleton key={i} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -164,254 +90,134 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-6 py-8">
-        <div className="flex items-center justify-center space-x-2 mb-4">
-          <Sparkles className="h-8 w-8 text-primary animate-pulse" />
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-            Welcome to My Blog
-          </h1>
-          <Sparkles className="h-8 w-8 text-primary animate-pulse" />
-        </div>
-        
-        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-          Discover the latest articles, tutorials, and insights on web development, technology, and more
-        </p>
-      </div>
-
-      {/* Search Results Header */}
-      {searchQuery && (
-        <div className="max-w-6xl mx-auto">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Search className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">
-                    Search Results for "{searchQuery}"
-                  </h2>
-                </div>
-                <Badge variant="secondary">
-                  {filteredPosts.length} of {posts.length} posts
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Posts Grid */}
-      <div className="max-w-6xl mx-auto">
-        {posts.length === 0 ? (
-          <Card className="max-w-md mx-auto">
-            <CardContent className="text-center py-12">
-              <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold mb-4">No posts yet</h2>
-              <p className="text-muted-foreground">
-                Check back later for new content!
-              </p>
-            </CardContent>
-          </Card>
-        ) : searchQuery && filteredPosts.length === 0 ? (
-          <Card className="max-w-md mx-auto">
-            <CardContent className="text-center py-12">
-              <Search className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold mb-4">No posts found</h2>
-              <p className="text-muted-foreground">
-                No posts match your search for "{searchQuery}"
-              </p>
-            </CardContent>
-          </Card>
-        ) : selectedCategory && filteredPosts.length === 0 ? (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">
-                {categories.find(c => c.id === selectedCategory)?.name || 'Category'} Posts
-              </h2>
-              <Badge variant="outline" className="text-sm">
-                0 posts in this category
-              </Badge>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-12">
+        <div className="space-y-12">
+          {/* Hero Section */}
+          <div className="text-center space-y-6 py-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Sparkles className="h-8 w-8 text-primary animate-pulse" />
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+                Explore Topics
+              </h1>
+              <Sparkles className="h-8 w-8 text-primary animate-pulse" />
             </div>
             
-            {/* Category Filter */}
-            {categories.length > 0 && (
-              <div className="flex justify-center">
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Button
-                    variant={selectedCategory === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      if (selectedCategory !== null) {
-                        setCategoryLoading(true)
-                        setTimeout(() => {
-                          setSelectedCategory(null)
-                          setCategoryLoading(false)
-                        }, 300)
-                      }
-                    }}
-                    className="rounded-full"
-                  >
-                    All Categories
-                  </Button>
-                  {categories.map((category) => (
-                    <Button
-                      key={category.id}
-                      variant={selectedCategory === category.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        if (selectedCategory !== category.id) {
-                          setCategoryLoading(true)
-                          setTimeout(() => {
-                            setSelectedCategory(category.id)
-                            setCategoryLoading(false)
-                          }, 300)
-                        }
-                      }}
-                      className="rounded-full"
-                    >
-                      {category.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+              Browse through our curated categories and discover articles that interest you
+            </p>
 
-            <Card className="max-w-md mx-auto">
-              <CardContent className="text-center py-12">
-                <div className="text-4xl mb-4">📂</div>
-                <h2 className="text-2xl font-semibold mb-4">No posts in this category</h2>
-                <p className="text-muted-foreground mb-4">
-                  No posts found in "{categories.find(c => c.id === selectedCategory)?.name}" category yet.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setCategoryLoading(true)
-                    setTimeout(() => {
-                      setSelectedCategory(null)
-                      setCategoryLoading(false)
-                    }, 300)
-                  }}
-                  className="mt-2"
-                >
-                  View All Posts
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="flex items-center justify-center gap-8 pt-4">
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground font-medium">
+                  {postCategories.length} Categories
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground font-medium">
+                  {postCategories.reduce((acc, cat) => acc + (cat._count?.posts || 0), 0)} Total Posts
+                </span>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">
-                {searchQuery ? 'Search Results' : 
-                 selectedCategory ? `${categories.find(c => c.id === selectedCategory)?.name || 'Category'} Posts` : 
-                 'Latest Posts'}
-              </h2>
-              {!searchQuery && (
-                <Badge variant="outline" className="text-sm">
-                  {selectedCategory ? (
-                    showAllPosts ? 
-                      `${filteredPosts.length} posts in this category` :
-                      `Showing ${Math.min(6, filteredPosts.length)} of ${filteredPosts.length} posts`
-                  ) : (
-                    showAllPosts ? 
-                      `${posts.length} total posts` :
-                      posts.length > 6 ? 
-                        `Showing 6 of ${posts.length} posts` :
-                        `${posts.length} posts`
-                  )}
-                </Badge>
-              )}
-            </div>
-            
-            {/* Category Filter */}
-            {categories.length > 0 && (
-              <div className="flex justify-center">
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Button
-                    variant={selectedCategory === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      if (selectedCategory !== null) {
-                        setCategoryLoading(true)
-                        setTimeout(() => {
-                          setSelectedCategory(null)
-                          setCategoryLoading(false)
-                        }, 300)
-                      }
-                    }}
-                    className="rounded-full"
+
+          {/* Categories Grid */}
+          <div className="max-w-7xl mx-auto">
+            {postCategories.length === 0 ? (
+              <Card className="max-w-md mx-auto">
+                <CardContent className="text-center py-16">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+                    <Layers className="h-10 w-10 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-semibold mb-4">No Categories Yet</h2>
+                  <p className="text-muted-foreground">
+                    Check back later for new content categories!
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {postCategories.map((category) => (
+                  <Link 
+                    key={category.id} 
+                    href={`/category/${category.id}`}
+                    className="group"
                   >
-                    All Categories
-                  </Button>
-                  {categories.map((category) => (
-                    <Button
-                      key={category.id}
-                      variant={selectedCategory === category.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        if (selectedCategory !== category.id) {
-                          setCategoryLoading(true)
-                          setTimeout(() => {
-                            setSelectedCategory(category.id)
-                            setCategoryLoading(false)
-                          }, 300)
-                        }
-                      }}
-                      className="rounded-full"
-                    >
-                      {category.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categoryLoading ? (
-                // Show skeleton cards when filtering by category
-                Array.from({ length: 6 }).map((_, i) => (
-                  <PostCardSkeleton key={i} />
-                ))
-              ) : (
-                postsToDisplay.map((post) => (
-                  <PostCard key={post.id} {...post} />
-                ))
-              )}
-            </div>
-            
-            {/* See All Button */}
-            {!searchQuery && !selectedCategory && posts.length > 6 && !showAllPosts && (
-              <div className="flex justify-center pt-6">
-                <Button 
-                  onClick={() => setShowAllPosts(true)}
-                  variant="outline"
-                  size="lg"
-                  className="flex items-center space-x-2 hover:bg-primary hover:text-primary-foreground transition-colors"
-                >
-                  <span>See All Posts ({posts.length})</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            
-            {/* Show Less Button */}
-            {!searchQuery && showAllPosts && posts.length > 6 && (
-              <div className="flex justify-center pt-6">
-                <Button 
-                  onClick={() => setShowAllPosts(false)}
-                  variant="outline"
-                  size="lg"
-                  className="flex items-center space-x-2 hover:bg-primary hover:text-primary-foreground transition-colors"
-                >
-                  <span>Show Less</span>
-                  <ChevronDown className="h-4 w-4 rotate-180" />
-                </Button>
+                    <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-muted/50 bg-card/50 backdrop-blur">
+                      {/* Category Image */}
+                      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+                        {category.image ? (
+                          <Image
+                            src={category.image}
+                            alt={category.name}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
+                              <Layers className="h-16 w-16 text-primary/60 relative" />
+                            </div>
+                          </div>
+                        )}
+                        {/* Overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-60"></div>
+                      </div>
+
+                      <CardHeader className="space-y-2">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors line-clamp-1">
+                            {category.name}
+                          </CardTitle>
+                          <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <CardDescription className="line-clamp-2 text-sm">
+                          {category.description || "Explore articles in this category"}
+                        </CardDescription>
+                      </CardHeader>
+
+                      <CardFooter className="pt-0 pb-4">
+                        <div className="flex items-center justify-between w-full">
+                          <Badge variant="secondary" className="font-medium">
+                            <FileText className="h-3 w-3 mr-1" />
+                            {category._count?.posts || 0} Posts
+                          </Badge>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(category.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                ))}
               </div>
             )}
           </div>
-        )}
+
+          {/* Bottom CTA Section */}
+          {postCategories.length > 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                Can't find what you're looking for?
+              </p>
+              <Link href="/search">
+                <Badge 
+                  variant="outline" 
+                  className="px-6 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                >
+                  Search All Posts →
+                </Badge>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

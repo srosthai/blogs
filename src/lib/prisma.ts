@@ -1,11 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseUrl     = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Database interface for compatibility with existing code
 export const db = {
   user: {
     findUnique: async ({ where }: { where: { id?: string; email?: string } }) => {
@@ -47,15 +45,27 @@ export const db = {
     findMany: async ({ where = {}, orderBy = {}, include = {} }: { where?: any; orderBy?: any; include?: any } = {}) => {
       let selectFields = '*'
       
-      // Include category information if requested
+      // Include related information if requested
+      if (include.author) {
+        selectFields = `*, author:User(*)`
+      }
       if (include.category) {
         selectFields = `*, category:Category(*)`
       }
       if (include.postCategory) {
         selectFields = `*, postCategory:PostCategory(*)`
       }
+      if (include.author && include.category) {
+        selectFields = `*, author:User(*), category:Category(*)`
+      }
+      if (include.author && include.postCategory) {
+        selectFields = `*, author:User(*), postCategory:PostCategory(*)`
+      }
       if (include.category && include.postCategory) {
         selectFields = `*, category:Category(*), postCategory:PostCategory(*)`
+      }
+      if (include.author && include.category && include.postCategory) {
+        selectFields = `*, author:User(*), category:Category(*), postCategory:PostCategory(*)`
       }
       
       let query = supabase.from('Post').select(selectFields)
@@ -89,15 +99,27 @@ export const db = {
     findUnique: async ({ where, include = {} }: { where: { id?: string; slug?: string }; include?: any }) => {
       let selectFields = '*'
       
-      // Include category information if requested
+      // Include related information if requested
+      if (include?.author) {
+        selectFields = `*, author:User(*)`
+      }
       if (include?.category) {
         selectFields = `*, category:Category(*)`
       }
       if (include?.postCategory) {
         selectFields = `*, postCategory:PostCategory(*)`
       }
+      if (include?.author && include?.category) {
+        selectFields = `*, author:User(*), category:Category(*)`
+      }
+      if (include?.author && include?.postCategory) {
+        selectFields = `*, author:User(*), postCategory:PostCategory(*)`
+      }
       if (include?.category && include?.postCategory) {
         selectFields = `*, category:Category(*), postCategory:PostCategory(*)`
+      }
+      if (include?.author && include?.category && include?.postCategory) {
+        selectFields = `*, author:User(*), category:Category(*), postCategory:PostCategory(*)`
       }
       
       const { data, error } = await supabase
@@ -265,9 +287,9 @@ export const db = {
       }
       
       if (orderBy.createdAt) {
-        query = query.order('createdAt', { ascending: orderBy.createdAt === 'asc' })
+        query = query.order('createdAt', { ascending: orderBy.createdAt === 'desc' })
       } else if (orderBy.name) {
-        query = query.order('name', { ascending: orderBy.name === 'asc' })
+        query = query.order('name', { ascending: orderBy.name === 'desc' })
       } else {
         query = query.order('createdAt', { ascending: false })
       }
