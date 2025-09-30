@@ -4,7 +4,6 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import ReactMarkdown from 'react-markdown'
@@ -61,7 +60,8 @@ export function PostForm({ initialData, onSubmit, loading = false }: PostFormPro
     setFormData(prev => ({
       ...prev,
       title,
-      slug: prev.slug || generateSlug(title)
+      // Auto-generate slug only if it's empty or matches the previous title's slug
+      slug: (!prev.slug || prev.slug === generateSlug(prev.title)) ? generateSlug(title) : prev.slug
     }))
   }
 

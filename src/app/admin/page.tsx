@@ -238,23 +238,31 @@ function AdminDashboard() {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex gap-2">
+            <div className="flex gap-1 p-1 bg-muted rounded-lg">
               <Button
-                variant={viewMode === "table" ? "default" : "outline"}
+                variant={viewMode === "table" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("table")}
-                className="h-10 px-4"
+                className={`px-4 py-2 h-9 gap-2 font-medium transition-all ${
+                  viewMode === "table" 
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
               >
-                <TableProperties className="w-4 h-4 mr-2" />
+                <TableProperties className="w-4 h-4" />
                 Table
               </Button>
               <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
+                variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("grid")}
-                className="h-10 px-4"
+                className={`px-4 py-2 h-9 gap-2 font-medium transition-all ${
+                  viewMode === "grid" 
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
               >
-                <Grid3X3 className="w-4 h-4 mr-2" />
+                <Grid3X3 className="w-4 h-4" />
                 Grid
               </Button>
             </div>
@@ -538,15 +546,17 @@ function AdminDashboard() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 pt-6 border-t">
-              <p className="text-sm text-muted-foreground">
-                Showing {startIndex + 1}-{Math.min(startIndex + postsPerPage, filteredPosts.length)} of {filteredPosts.length} posts
-              </p>
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+            <div className="bg-white dark:bg-gray-950 rounded-lg border p-4 mt-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p className="text-sm text-muted-foreground font-medium">
+                  Showing <span className="text-foreground">{startIndex + 1}-{Math.min(startIndex + postsPerPage, filteredPosts.length)}</span> of <span className="text-foreground">{filteredPosts.length}</span> posts
+                </p>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
             </div>
           )}
         </>)}

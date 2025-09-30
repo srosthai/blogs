@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Pagination } from "@/components/ui/pagination"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,6 +70,8 @@ export default function PostCategoriesPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
   const [viewMode, setViewMode] = useState<"grid" | "table">("table")
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const categoriesPerPage = 10
 
   useEffect(() => {
     fetchPostCategories()
@@ -175,115 +178,221 @@ export default function PostCategoriesPage() {
     })
   }, [postCategories, searchTerm, statusFilter])
 
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="text-center">Loading post categories...</div>
-      </div>
-    )
-  }
+  const totalPages = Math.ceil(filteredPostCategories.length / categoriesPerPage)
+  const startIndex = (currentPage - 1) * categoriesPerPage
+  const paginatedPostCategories = filteredPostCategories.slice(startIndex, startIndex + categoriesPerPage)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
+
+  const LoadingSkeleton = () => (
+    <>
+      {viewMode === "table" ? (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-32"></div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-48"></div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse w-16"></div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-24"></div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-8 ml-auto"></div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="space-y-2">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-32 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-2/3"></div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-24"></div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+    </>
+  )
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Post Categories</h1>
-          <p className="text-muted-foreground">Manage your blog post categories</p>
-        </div>
-        <Link href="/admin/post-categories/new">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            New Post Category
-          </Button>
-        </Link>
-      </div>
-
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search post categories..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                {statusFilter === "all" ? "All Status" : statusFilter === "active" ? "Active" : "Inactive"}
+    <div className="min-h-screen bg-background">
+      {/* Header Section */}
+      <div className="border-b bg-white dark:bg-gray-950 sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight">Post Categories</h1>
+              <p className="text-muted-foreground">Manage your blog post categories</p>
+            </div>
+            <Link href="/admin/post-categories/new">
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                New Post Category
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setStatusFilter("all")}>
-                All Status
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("active")}>
-                Active Only
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("inactive")}>
-                Inactive Only
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <div className="flex border rounded-md">
-            <Button
-              variant={viewMode === "table" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("table")}
-              className="rounded-r-none"
-            >
-              <TableProperties className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              className="rounded-l-none"
-            >
-              <Grid3X3 className="w-4 h-4" />
-            </Button>
+            </Link>
           </div>
         </div>
       </div>
 
-      {filteredPostCategories.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">
-            {postCategories.length === 0 ? "No post categories found. Create your first post category!" : "No post categories match your search criteria."}
-          </p>
-          {postCategories.length === 0 ? (
-            <Link href="/admin/post-categories/new">
-              <Button>Create your first post category</Button>
-            </Link>
-          ) : (
-            <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
-              Clear filters
-            </Button>
-          )}
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-8">
+
+        {/* Search and Filter Controls */}
+        <div className="bg-white dark:bg-gray-950 rounded-lg border p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search post categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 min-w-[140px]">
+                    <Filter className="w-4 h-4" />
+                    {statusFilter === "all" ? "All Status" : statusFilter === "active" ? "Active" : "Inactive"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setStatusFilter("all")}>
+                    All Status
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("active")}>
+                    Active Only
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("inactive")}>
+                    Inactive Only
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                <Button
+                  variant={viewMode === "table" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                  className={`px-4 py-2 h-9 gap-2 font-medium transition-all ${
+                    viewMode === "table" 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  }`}
+                >
+                  <TableProperties className="w-4 h-4" />
+                  Table
+                </Button>
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className={`px-4 py-2 h-9 gap-2 font-medium transition-all ${
+                    viewMode === "grid" 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                  Grid
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <>
-          {viewMode === "table" ? (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Image</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPostCategories.map((postCategory) => (
-                    <TableRow key={postCategory.id}>
+
+        {loading ? (
+          <LoadingSkeleton />
+        ) : filteredPostCategories.length === 0 ? (
+          <div className="bg-white dark:bg-gray-950 rounded-lg border p-12">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📂</div>
+              <h3 className="text-xl font-semibold mb-2">
+                {postCategories.length === 0 ? "No post categories found" : "No matching post categories"}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                {postCategories.length === 0 
+                  ? "Create your first post category to organize your content!" 
+                  : "No post categories match your search criteria."
+                }
+              </p>
+              {postCategories.length === 0 ? (
+                <Link href="/admin/post-categories/new">
+                  <Button className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Create your first post category
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}
+                  className="gap-2"
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            {viewMode === "table" ? (
+              <div className="bg-white dark:bg-gray-950 rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b">
+                      <TableHead className="w-16">Image</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="w-24">Status</TableHead>
+                      <TableHead className="w-32">Created</TableHead>
+                      <TableHead className="w-20 text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedPostCategories.map((postCategory) => (
+                      <TableRow key={postCategory.id} className="hover:bg-muted/50">
                       <TableCell>
                         {postCategory.image ? (
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
@@ -315,7 +424,7 @@ export default function PostCategoriesPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -356,24 +465,28 @@ export default function PostCategoriesPage() {
                 </TableBody>
               </Table>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredPostCategories.map((postCategory) => (
-                <Card key={postCategory.id} className="group hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">{postCategory?.name || 'Unnamed Post Category'}</CardTitle>
-                        <Badge variant={postCategory.status ? "default" : "secondary"} className="w-fit">
-                          {postCategory.status ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {paginatedPostCategories.map((postCategory) => (
+                  <Card key={postCategory.id} className="group hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-950">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <CardTitle className="text-lg leading-tight">{postCategory?.name || 'Unnamed Post Category'}</CardTitle>
+                          <Badge variant={postCategory.status ? "default" : "secondary"} className="w-fit">
+                            {postCategory.status ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/post-categories/edit/${postCategory.id}`}>
@@ -406,8 +519,8 @@ export default function PostCategoriesPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </CardHeader>
-                  <CardContent>
+                    </CardHeader>
+                    <CardContent className="pt-0">
                     {postCategory.image && (
                       <div className="relative w-full h-32 rounded-lg overflow-hidden mb-4 bg-gray-100 dark:bg-gray-800">
                         <Image
@@ -418,21 +531,37 @@ export default function PostCategoriesPage() {
                         />
                       </div>
                     )}
-                    <CardDescription className="line-clamp-3">
-                      {postCategory.description || "No description available"}
-                    </CardDescription>
-                  </CardContent>
-                  <CardFooter className="text-sm text-muted-foreground">
-                    Created {new Date(postCategory.createdAt).toLocaleDateString()}
-                  </CardFooter>
+                      <CardDescription className="line-clamp-3 text-sm">
+                        {postCategory.description || "No description available"}
+                      </CardDescription>
+                    </CardContent>
+                    <CardFooter className="pt-0 text-xs text-muted-foreground">
+                      Created {new Date(postCategory.createdAt).toLocaleDateString()}
+                    </CardFooter>
                 </Card>
               ))}
-            </div>
-          )}
-        </>
-      )}
+              </div>
+            )}
+          </>
+        )}
 
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="bg-white dark:bg-gray-950 rounded-lg border p-4 mt-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <p className="text-sm text-muted-foreground font-medium">
+                Showing <span className="text-foreground">{startIndex + 1}-{Math.min(startIndex + categoriesPerPage, filteredPostCategories.length)}</span> of <span className="text-foreground">{filteredPostCategories.length}</span> post categories
+              </p>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </div>
+        )}
+
+        <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -450,7 +579,8 @@ export default function PostCategoriesPage() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+        </AlertDialog>
+      </div>
     </div>
   )
 }

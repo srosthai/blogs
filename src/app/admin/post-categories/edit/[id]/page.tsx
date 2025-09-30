@@ -1,17 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, X, ImageIcon } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
+import { PostCategoryForm } from "@/components/forms/PostCategoryForm"
 
 interface PostCategory {
   id: string
@@ -21,19 +16,20 @@ interface PostCategory {
   status: boolean
 }
 
+interface PostCategoryFormData {
+  name: string
+  description: string
+  image: string
+  status: boolean
+}
+
 export default function EditPostCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [id, setId] = useState<string | null>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    image: "",
-    status: true
-  })
+  const [postCategory, setPostCategory] = useState<PostCategory | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -54,28 +50,20 @@ export default function EditPostCategoryPage({ params }: { params: Promise<{ id:
       setFetchLoading(true)
       const response = await fetch(`/api/admin/post-categories/${id}`)
       if (response.ok) {
-        const postCategory: PostCategory = await response.json()
-        setFormData({
-          name: postCategory.name,
-          description: postCategory.description,
-          image: postCategory.image || '',
-          status: postCategory.status
-        })
+        const postCategoryData: PostCategory = await response.json()
+        setPostCategory(postCategoryData)
       } else {
-        toast.error("Post category not found")
-        router.push("/admin/post-categories")
+        const errorData = await response.json()
+        setError(errorData.error || "Post category not found")
       }
     } catch (error) {
-      toast.error("Failed to load post category")
-      router.push("/admin/post-categories")
+      setError("Failed to load post category")
     } finally {
       setFetchLoading(false)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+  const handleSubmit = async (formData: PostCategoryFormData) => {
     if (!formData.name.trim()) {
       toast.error("Post category name is required")
       return
@@ -96,7 +84,12 @@ export default function EditPostCategoryPage({ params }: { params: Promise<{ id:
       if (response.ok) {
         toast.dismiss(loadingToast)
         toast.success("Post category updated successfully!")
-        router.push("/admin/post-categories")
+        
+        // Small delay to show success message before redirect
+        setTimeout(() => {
+          router.push("/admin/post-categories")
+          router.refresh()
+        }, 1000)
       } else {
         const error = await response.json()
         toast.dismiss(loadingToast)
@@ -110,193 +103,94 @@ export default function EditPostCategoryPage({ params }: { params: Promise<{ id:
     }
   }
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
-  const handleImageUpload = async (file: File) => {
-    setUploadingImage(true)
-    const uploadToast = toast.loading('Uploading image...')
-    
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setFormData(prev => ({ ...prev, image: data.url }))
-        toast.dismiss(uploadToast)
-        toast.success('Image uploaded successfully!')
-      } else {
-        const error = await response.json()
-        toast.dismiss(uploadToast)
-        toast.error(error.error || 'Failed to upload image')
-      }
-    } catch (error) {
-      console.error('Upload error:', error)
-      toast.dismiss(uploadToast)
-      toast.error('Failed to upload image')
-    } finally {
-      setUploadingImage(false)
-    }
-  }
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      handleImageUpload(file)
-    }
-  }
-
-  const removeImage = () => {
-    setFormData(prev => ({ ...prev, image: '' }))
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
   if (fetchLoading) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
-        <div className="text-center">Loading post category...</div>
+      <div className="min-h-screen bg-background">
+        <div className="border-b bg-white dark:bg-gray-950">
+          <div className="container mx-auto px-6 py-6">
+            <div className="space-y-1">
+              <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-48"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-64"></div>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-lg text-muted-foreground">Loading post category...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !postCategory) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b bg-white dark:bg-gray-950">
+          <div className="container mx-auto px-6 py-6">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight text-destructive">Error</h1>
+              <p className="text-muted-foreground">Unable to load the post category</p>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-xl font-semibold mb-2 text-destructive">
+                {error || 'Post category not found'}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                The post category you're looking for doesn't exist or you don't have permission to edit it.
+              </p>
+              <Link href="/admin/post-categories">
+                <Button className="gap-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Post Categories
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/admin/post-categories">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Post Categories
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Post Category</h1>
-          <p className="text-muted-foreground">Update post category information</p>
+    <div className="min-h-screen bg-background">
+      {/* Header Section */}
+      <div className="border-b bg-white dark:bg-gray-950 sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center gap-4">
+            <Link href="/admin/post-categories">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Post Categories
+              </Button>
+            </Link>
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight">Edit Post Category</h1>
+              <p className="text-muted-foreground">Update post category information</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Post Category Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                placeholder="Enter post category name"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter post category description (optional)"
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            {/* Post Category Image Upload */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Post Category Image</label>
-              
-              {formData.image ? (
-                <div className="relative">
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden border">
-                    <Image
-                      src={formData.image}
-                      alt="Post category image"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingImage}
-                    className="w-full h-32 border-dashed"
-                  >
-                    <div className="flex flex-col items-center space-y-2">
-                      {uploadingImage ? (
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                      ) : (
-                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                      )}
-                      <span className="text-sm text-muted-foreground">
-                        {uploadingImage ? 'Uploading...' : 'Click to upload post category image'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        PNG, JPG, WebP up to 5MB
-                      </span>
-                    </div>
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="status"
-                checked={formData.status}
-                onCheckedChange={(checked) => handleInputChange("status", checked)}
-              />
-              <Label htmlFor="status">
-                Active (Published and visible to users)
-              </Label>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={loading}>
-                <Save className="w-4 h-4 mr-2" />
-                {loading ? "Updating..." : "Update Post Category"}
-              </Button>
-              <Link href="/admin/post-categories">
-                <Button type="button" variant="outline" disabled={loading}>
-                  Cancel
-                </Button>
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-8">
+        <PostCategoryForm
+          initialData={{
+            ...postCategory,
+            image: postCategory.image || ""
+          }}
+          onSubmit={handleSubmit}
+          loading={loading}
+        />
+      </div>
     </div>
   )
 }
