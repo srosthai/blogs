@@ -41,9 +41,63 @@ export async function generateMetadata({ params }: Props) {
     }
   }
 
+  const description = post.content.slice(0, 160).replace(/[#*`\[\]]/g, '')
+  const publishedTime = new Date(post.createdAt).toISOString()
+  const modifiedTime = new Date(post.updatedAt || post.createdAt).toISOString()
+  const tags = post.tags ? post.tags.split(',').map((tag: string) => tag.trim()) : []
+
   return {
     title: post.title,
-    description: post.content.slice(0, 160),
+    description,
+    keywords: tags,
+    authors: [{ name: post.author?.name || 'SrosThaiDev' }],
+    openGraph: {
+      title: post.title,
+      description,
+      type: 'article',
+      publishedTime,
+      modifiedTime,
+      authors: [post.author?.name || 'SrosThaiDev'],
+      tags,
+      images: post.image ? [
+        {
+          url: post.image,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        }
+      ] : [
+        {
+          url: '/me-fav.png',
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        }
+      ],
+      url: `https://blog.srosthai.dev/blog/${slug}`,
+      siteName: 'SrosThaiDev Blog',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description,
+      images: [post.image || '/me-fav.png'],
+      creator: '@srosthai',
+    },
+    alternates: {
+      canonical: `https://blog.srosthai.dev/blog/${slug}`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   }
 }
 
@@ -57,17 +111,52 @@ export default async function BlogPost({ params }: Props) {
 
   const tagArray = post.tags ? post.tags.split(',').map((tag: string) => tag.trim()) : []
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": post.title,
+    "description": post.content.slice(0, 160).replace(/[#*`\[\]]/g, ''),
+    "image": post.image || "https://blog.srosthai.dev/me-fav.png",
+    "datePublished": new Date(post.createdAt).toISOString(),
+    "dateModified": new Date(post.updatedAt || post.createdAt).toISOString(),
+    "author": {
+      "@type": "Person",
+      "name": post.author?.name || "SrosThaiDev"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SrosThaiDev Blog",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.srosthai.dev/me-fav.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://blog.srosthai.dev/blog/${slug}`
+    },
+    "keywords": post.tags || "",
+    "url": `https://blog.srosthai.dev/blog/${slug}`
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto mb-6">
-        <Link href="/">
-          <Button variant="ghost" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Blog List
-          </Button>
-        </Link>
-      </div>
-      <article className="max-w-4xl mx-auto">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData)
+        }}
+      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto mb-6">
+          <Link href="/">
+            <Button variant="ghost" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Blog List
+            </Button>
+          </Link>
+        </div>
+        <article className="max-w-4xl mx-auto">
         <header className="mb-8">
           <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
           <div className="flex items-center gap-4 text-muted-foreground mb-4">
@@ -166,7 +255,8 @@ export default async function BlogPost({ params }: Props) {
             {post.content}
           </ReactMarkdown>
         </div>
-      </article>
-    </div>
+        </article>
+      </div>
+    </>
   )
 }

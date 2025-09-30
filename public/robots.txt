@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Allow all search engines to crawl the site
+Allow: /blog/
+Allow: /auth/
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /api/
+
+# Disallow private files
+Disallow: /_next/
+Disallow: /.next/
+
+# Sitemap location
+Sitemap: https://blog.srosthai.dev/sitemap.xml
