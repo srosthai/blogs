@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Tags, Hash, BookOpen, Filter, Sparkles, Search, Grid3x3, List, Eye, Clock } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 interface Post {
   id: string
@@ -327,14 +328,21 @@ export default function TagsPage() {
                           <div className="flex flex-col md:flex-row">
                             <div className="relative w-full md:w-48 h-48 md:h-32 overflow-hidden bg-gradient-to-br from-primary/10 to-muted/20">
                               {post.image ? (
-                                <img
+                                <Image
                                   src={post.image}
                                   alt={post.title}
-                                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                                  fill
+                                  sizes="(max-width: 768px) 100vw, 192px"
+                                  className="object-cover transition-transform duration-300 hover:scale-105"
                                 />
                               ) : (
-                                <div className="flex items-center justify-center h-full">
-                                  <BookOpen className="h-8 w-8 text-muted-foreground" />
+                                <div className="relative h-full bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 flex items-center justify-center">
+                                  <div className="flex flex-col items-center justify-center text-center">
+                                    <div className="p-2 rounded-full bg-primary/10 mb-1">
+                                      <BookOpen className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <p className="text-xs font-medium text-muted-foreground">Read Article</p>
+                                  </div>
                                 </div>
                               )}
                             </div>
