@@ -89,10 +89,18 @@ export function NavbarSearch() {
   }
 
   const handleClickOutside = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    const target = e.target as HTMLElement
+    if (e.target === e.currentTarget && !target.closest('input')) {
       setIsOpen(false)
     }
   }
+
+  // Prevent input from losing focus when dropdown appears
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isOpen])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || filteredPosts.length === 0) return
@@ -133,7 +141,7 @@ export function NavbarSearch() {
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-10 w-64 sm:w-80 bg-background/50 backdrop-blur-sm border-2 border-border/50 hover:border-border/80 focus:border-primary/50 transition-all duration-200 rounded-xl"
+          className="pl-10 pr-10 w-full max-w-lg bg-background border-2 border-border/50 hover:border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
           onFocus={() => searchQuery && setIsOpen(true)}
         />
         {searchQuery && (
@@ -151,10 +159,14 @@ export function NavbarSearch() {
       {/* Command Palette Results */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm"
+          className=""
           onClick={handleClickOutside}
+          onMouseDown={(e) => e.preventDefault()}
         >
-          <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl mx-4">
+          <div
+            className="absolute top-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl mx-4 w-80"
+            onMouseDown={(e) => e.preventDefault()}
+          >
             <Card className="shadow-2xl border-2 border-border/50 backdrop-blur-md bg-background/95 rounded-2xl overflow-hidden">
               <CardContent className="p-0">
                 {loading ? (
@@ -177,23 +189,21 @@ export function NavbarSearch() {
                     {filteredPosts.map((post, index) => (
                       <div
                         key={post.id}
-                        className={`p-4 cursor-pointer transition-all duration-150 flex items-center justify-between group ${
-                          index === selectedIndex 
-                            ? 'bg-primary/10 border-l-4 border-primary' 
+                        className={`p-4 cursor-pointer transition-all duration-150 flex items-center justify-between group ${index === selectedIndex
+                            ? 'bg-primary/10 border-l-4 border-primary'
                             : 'hover:bg-muted/30 border-l-4 border-transparent'
-                        }`}
+                          }`}
                         onClick={() => handlePostClick(post.slug)}
+                        onMouseDown={(e) => e.preventDefault()}
                       >
                         <div className="flex items-center space-x-4 flex-1 min-w-0">
-                          <div className={`p-2 rounded-lg transition-colors ${
-                            index === selectedIndex ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
-                          }`}>
+                          <div className={`p-2 rounded-lg transition-colors ${index === selectedIndex ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
+                            }`}>
                             <FileText className="h-4 w-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className={`font-semibold text-sm truncate transition-colors ${
-                              index === selectedIndex ? 'text-foreground' : 'text-foreground/90'
-                            }`}>
+                            <h3 className={`font-semibold text-sm truncate transition-colors ${index === selectedIndex ? 'text-foreground' : 'text-foreground/90'
+                              }`}>
                               {post.title}
                             </h3>
                             <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
@@ -202,9 +212,9 @@ export function NavbarSearch() {
                             {post.tags && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {post.tags.split(',').slice(0, 3).map((tag, i) => (
-                                  <Badge 
-                                    key={i} 
-                                    variant="outline" 
+                                  <Badge
+                                    key={i}
+                                    variant="outline"
                                     className="text-xs h-5 px-2 bg-background/50"
                                   >
                                     {tag.trim()}
@@ -214,9 +224,8 @@ export function NavbarSearch() {
                             )}
                           </div>
                         </div>
-                        <ArrowRight className={`h-4 w-4 transition-all duration-200 ${
-                          index === selectedIndex ? 'text-primary opacity-100 translate-x-0' : 'text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0'
-                        }`} />
+                        <ArrowRight className={`h-4 w-4 transition-all duration-200 ${index === selectedIndex ? 'text-primary opacity-100 translate-x-0' : 'text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0'
+                          }`} />
                       </div>
                     ))}
                     {posts.filter(post =>
