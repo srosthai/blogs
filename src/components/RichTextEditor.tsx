@@ -70,7 +70,7 @@ export function RichTextEditor({
     return undefined // Prevent default upload
   }
 
-  const editorOptions = {
+  const editorOptions: any = {
     buttonList: [
       ['undo', 'redo'],
       ['font', 'fontSize', 'formatBlock'],
