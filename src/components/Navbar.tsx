@@ -5,28 +5,23 @@ import { useSession, signIn, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { FloatingDock } from "@/components/ui/floating-dock"
-import { ThemeToggle } from "@/components/ThemeToggle"
 import { NavbarSearch } from "@/components/NavbarSearch"
-import { BookOpen, Home, Tags, User, LogOut, Search, Sparkles, Sun, Moon } from "lucide-react"
+import { BookOpen, Home, Tags, User, LogOut, Search, Sparkles } from "lucide-react"
 import {
   IconHome,
   IconTags,
   IconSearch,
   IconUser,
   IconLogout,
-  IconBook2,
-  IconSun,
-  IconMoon
+  IconBook2
 } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
-import { useTheme } from "next-themes"
 
 export function Navbar() {
   const { data: session } = useSession()
   const router = useRouter()
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
 
   const handleSignOut = async () => {
     try {
@@ -45,34 +40,23 @@ export function Navbar() {
     }
   }
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
-  }
 
   // Define dock items
   const dockItems = [
     {
       title: "Home",
-      icon: <IconHome className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      icon: <IconHome className="h-full w-full text-neutral-300" />,
       href: "/",
     },
     {
       title: "Tags",
-      icon: <IconTags className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      icon: <IconTags className="h-full w-full text-neutral-300" />,
       href: "/tags",
     },
     {
       title: "Blog",
-      icon: <IconBook2 className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      icon: <IconBook2 className="h-full w-full text-neutral-300" />,
       href: "/",
-    },
-    {
-      title: "Theme",
-      icon: theme === 'dark'
-        ? <IconSun className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-        : <IconMoon className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
-      href: "#",
-      onClick: toggleTheme,
     },
   ]
 
@@ -80,12 +64,12 @@ export function Navbar() {
   const adminItems = session ? [
     {
       title: "Admin",
-      icon: <IconUser className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      icon: <IconUser className="h-full w-full text-neutral-300" />,
       href: "/admin",
     },
     {
       title: "Sign Out",
-      icon: <IconLogout className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      icon: <IconLogout className="h-full w-full text-neutral-300" />,
       href: "#",
       onClick: handleSignOut,
     },
@@ -138,8 +122,8 @@ export function Navbar() {
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
         <FloatingDock
           items={allItems}
-          desktopClassName="bg-background/90 backdrop-blur-xl border border-border/40 shadow-2xl shadow-black/10 dark:shadow-black/40"
-          mobileClassName="bg-background/90 backdrop-blur-xl border border-border/40 shadow-2xl shadow-black/10 dark:shadow-black/40"
+          desktopClassName="bg-background/90 backdrop-blur-xl border border-border/40 shadow-2xl shadow-black/40"
+          mobileClassName="bg-background/90 backdrop-blur-xl border border-border/40 shadow-2xl shadow-black/40"
         />
       </div>
     </div>

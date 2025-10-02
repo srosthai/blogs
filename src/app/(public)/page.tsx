@@ -48,7 +48,7 @@ export default function Home() {
 
   // Component for category card skeleton
   const CategoryCardSkeleton = () => (
-    <Card className="h-full overflow-hidden bg-white dark:bg-card border border-border/30 rounded-2xl flex flex-col">
+    <Card className="h-full overflow-hidden bg-card border border-border/30 rounded-2xl flex flex-col">
       <div className="relative p-3">
         <Skeleton className="h-45 w-full rounded-xl" />
         {/* Heart icon skeleton */}
@@ -134,7 +134,7 @@ export default function Home() {
                     href={`/category/${category.id}`}
                     className="group block h-full"
                   >
-                    <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer bg-white dark:bg-card border border-border/30 rounded-2xl hover:-translate-y-1 flex flex-col">
+                    <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer bg-card border border-border/30 rounded-2xl hover:-translate-y-1 flex flex-col">
                       {/* Category Image with Heart Icon */}
                       <div className="relative p-3">
                         <div className="relative h-45 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm">

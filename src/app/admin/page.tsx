@@ -39,6 +39,7 @@ import { Pagination } from "@/components/ui/pagination"
 import Link from "next/link"
 import { useEffect, useState, useMemo } from "react"
 import { MoreHorizontal, Plus, Edit, Trash2, Eye, Search, Filter, Grid3X3, TableProperties } from "lucide-react"
+import { useAdminView } from "@/contexts/AdminViewContext"
 import { toast } from "sonner"
 
 interface Post {
@@ -58,12 +59,12 @@ interface Post {
 
 function AdminDashboard() {
   const { data: session } = useSession()
+  const { viewMode } = useAdminView()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [deletePostId, setDeletePostId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all")
-  const [viewMode, setViewMode] = useState<"grid" | "table">("table")
   const [currentPage, setCurrentPage] = useState(1)
   const postsPerPage = 10
 
@@ -213,60 +214,28 @@ function AdminDashboard() {
             </div>
           </div>
           
-          {/* Filter and View Toggle Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {/* Status Filter */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="h-10 min-w-[140px]">
-                    <Filter className="w-4 h-4 mr-2" />
-                    {statusFilter === "all" ? "All Posts" : statusFilter === "published" ? "Published" : "Draft"}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => setStatusFilter("all")}>
-                    All Posts
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("published")}>
-                    Published Only
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("draft")}>
-                    Draft Only
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex gap-1 p-1 bg-muted rounded-lg">
-              <Button
-                variant={viewMode === "table" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("table")}
-                className={`px-4 py-2 h-9 gap-2 font-medium transition-all ${
-                  viewMode === "table" 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                }`}
-              >
-                <TableProperties className="w-4 h-4" />
-                Table
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className={`px-4 py-2 h-9 gap-2 font-medium transition-all ${
-                  viewMode === "grid" 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                }`}
-              >
-                <Grid3X3 className="w-4 h-4" />
-                Grid
-              </Button>
-            </div>
+          {/* Filter Row */}
+          <div className="flex items-center gap-3">
+            {/* Status Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-10 min-w-[140px]">
+                  <Filter className="w-4 h-4 mr-2" />
+                  {statusFilter === "all" ? "All Posts" : statusFilter === "published" ? "Published" : "Draft"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setStatusFilter("all")}>
+                  All Posts
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("published")}>
+                  Published Only
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("draft")}>
+                  Draft Only
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -24,12 +25,20 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1">
-        {children}
-      </main>
-      <Footer />
-    </div>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange
+      forcedTheme="dark"
+    >
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    </ThemeProvider>
   );
 }

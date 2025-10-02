@@ -15,7 +15,10 @@ import {
   Tags,
   FolderOpen,
   Grid3X3,
-  Folder
+  Folder,
+  TableProperties,
+  Sun,
+  Moon
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
@@ -36,6 +39,9 @@ import {
   SidebarMenuSubItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
+import { Switch } from "@/components/ui/switch"
+import { useAdminView } from "@/contexts/AdminViewContext"
+import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 
 const menuItems = [
@@ -85,6 +91,8 @@ const menuItems = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { viewMode, toggleViewMode } = useAdminView()
+  const { theme, setTheme } = useTheme()
   const [expandedItems, setExpandedItems] = useState<string[]>(["Content"])
 
   const toggleExpanded = (title: string) => {
@@ -182,6 +190,66 @@ export function AdminSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {/* Theme Toggle */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground">APPEARANCE</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className="px-2 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {theme === "dark" ? (
+                    <Moon className="size-4 text-muted-foreground" />
+                  ) : (
+                    <Sun className="size-4 text-muted-foreground" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {theme === "dark" ? "Dark" : "Light"} Mode
+                  </span>
+                </div>
+                <Switch
+                  checked={theme === "dark"}
+                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                  className="data-[state=checked]:bg-primary"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 pl-6">
+                Switch between light and dark theme
+              </p>
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* View Mode Toggle - Only show on dashboard page */}
+        {pathname === "/admin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground">VIEW MODE</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="px-2 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {viewMode === "table" ? (
+                      <TableProperties className="size-4 text-muted-foreground" />
+                    ) : (
+                      <Grid3X3 className="size-4 text-muted-foreground" />
+                    )}
+                    <span className="text-sm font-medium">
+                      {viewMode === "table" ? "Table" : "Grid"}
+                    </span>
+                  </div>
+                  <Switch
+                    checked={viewMode === "grid"}
+                    onCheckedChange={toggleViewMode}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 pl-6">
+                  Switch between table and grid view
+                </p>
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="border-t">
         <SidebarMenu>

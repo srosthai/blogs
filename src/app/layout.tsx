@@ -104,7 +104,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
         <script
@@ -136,18 +136,11 @@ export default function RootLayout({
             })
           }}
         />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NextAuthProvider>
-            {children}
-            <ScrollToTop />
-            <Toaster />
-          </NextAuthProvider>
-        </ThemeProvider>
+        <NextAuthProvider>
+          {children}
+          <ScrollToTop />
+          <Toaster />
+        </NextAuthProvider>
       </body>
     </html>
   );
