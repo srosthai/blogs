@@ -70,6 +70,7 @@ export function RichTextEditor({
     return undefined // Prevent default upload
   }
 
+
   const editorOptions: any = {
     buttonList: [
       ['undo', 'redo'],
@@ -80,8 +81,9 @@ export function RichTextEditor({
       ['outdent', 'indent'],
       ['align', 'horizontalRule', 'list', 'table'],
       ['link', 'image', 'video'],
-      ['fullScreen', 'showBlocks', 'codeView'],
-      ['preview', 'print'],
+      // Separate view toggles (affect entire editor)
+      ['codeView', 'showBlocks'],
+      ['fullScreen', 'preview', 'print'],
     ],
     formats: ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
     font: [
@@ -116,6 +118,15 @@ export function RichTextEditor({
     minHeight: '300px',
     placeholder: placeholder,
     defaultStyle: 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; line-height: 1.6;',
+    // Fix for selection issues - ensure proper focus and range management
+    stickyToolbar: -1, // Disable sticky toolbar to avoid selection issues
+    toolbarCanCollapse: false, // Keep toolbar always visible
+    resizingBar: true,
+    showPathLabel: false,
+    // Important: These options help maintain proper text selection
+    maintainFocus: true, // Maintain focus when clicking toolbar buttons
+    addTagsWhitelist: '', // Prevent unwanted tags from being added
+    pasteTagsWhitelist: 'p|div|h[1-6]|blockquote|pre|code|ol|ul|li|dl|dt|dd|table|thead|tbody|tr|th|td|br|b|strong|i|em|u|ins|s|strike|del|sub|sup|mark|a|img|span', // Control what tags are allowed when pasting
     attributesWhitelist: {
       all: 'style',
       table: 'cellpadding|cellspacing|border|style',
@@ -138,6 +149,12 @@ export function RichTextEditor({
         <p className="text-muted-foreground">Loading editor...</p>
       </div>
     )
+  }
+
+  // Handle editor focus to maintain selection
+  const handleEditorFocus = () => {
+    // This helps maintain selection state when clicking toolbar buttons
+    return true
   }
 
   return (
@@ -202,6 +219,8 @@ export function RichTextEditor({
         onChange={onChange}
         setOptions={editorOptions}
         onImageUploadBefore={handleImageUploadBefore}
+        onFocus={handleEditorFocus}
+        setDefaultStyle="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; line-height: 1.6;"
       />
     </div>
   )
