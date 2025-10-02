@@ -23,19 +23,34 @@ export function PostCard({ title, content, slug, tags, image, createdAt, author 
   const tagArray = tags ? tags.split(',').map(tag => tag.trim()) : []
   
   // Get content preview with character limit  
-  const getContentPreview = (markdownContent: string) => {
-    // Remove markdown syntax for cleaner preview
-    const cleanText = markdownContent
-      .replace(/#{1,6}\s+/g, '') // Remove headers
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
-      .replace(/\*(.*?)\*/g, '$1') // Remove italic
-      .replace(/`(.*?)`/g, '$1') // Remove inline code
-      .replace(/```[\s\S]*?```/g, '[Code Block]') // Replace code blocks
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
-      .replace(/\n+/g, ' ') // Replace newlines with spaces
-      .trim()
+  const getContentPreview = (content: string) => {
+    // Check if content contains HTML tags
+    const hasHtmlTags = /<[^>]*>/.test(content)
     
-    return cleanText.slice(0, 120) + (cleanText.length > 120 ? '...' : '')
+    if (hasHtmlTags) {
+      // Strip HTML tags for preview
+      const cleanText = content
+        .replace(/<[^>]*>/g, '') // Remove all HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+        .replace(/&[a-z]+;/gi, '') // Remove other HTML entities
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim()
+      
+      return cleanText.slice(0, 120) + (cleanText.length > 120 ? '...' : '')
+    } else {
+      // Legacy markdown content handling
+      const cleanText = content
+        .replace(/#{1,6}\s+/g, '') // Remove headers
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+        .replace(/\*(.*?)\*/g, '$1') // Remove italic
+        .replace(/`(.*?)`/g, '$1') // Remove inline code
+        .replace(/```[\s\S]*?```/g, '[Code Block]') // Replace code blocks
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
+        .replace(/\n+/g, ' ') // Replace newlines with spaces
+        .trim()
+      
+      return cleanText.slice(0, 120) + (cleanText.length > 120 ? '...' : '')
+    }
   }
 
   const formatDate = (date: string | Date) => {

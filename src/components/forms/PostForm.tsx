@@ -3,16 +3,12 @@
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
 import { toast } from "sonner"
-import { CodeBlock, InlineCode } from '@/components/CodeBlock'
 import { CategorySelect } from '@/components/CategorySelect'
 import { PostCategorySelect } from '@/components/PostCategorySelect'
+import { RichTextEditor } from '@/components/RichTextEditor'
 import { X, Image as ImageIcon } from "lucide-react"
 import Image from "next/image"
 
@@ -79,7 +75,7 @@ export function PostForm({ initialData, onSubmit, loading = false }: PostFormPro
     await onSubmit(formData, published)
   }
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = async (file: File): Promise<string> => {
     setUploadingImage(true)
     const uploadToast = toast.loading('Uploading image...')
     
@@ -94,27 +90,38 @@ export function PostForm({ initialData, onSubmit, loading = false }: PostFormPro
       
       if (response.ok) {
         const data = await response.json()
-        setFormData(prev => ({ ...prev, image: data.url }))
         toast.dismiss(uploadToast)
         toast.success('Image uploaded successfully!')
+        return data.url
       } else {
         const error = await response.json()
         toast.dismiss(uploadToast)
         toast.error(error.error || 'Failed to upload image')
+        throw new Error(error.error || 'Failed to upload image')
       }
     } catch (error) {
       console.error('Upload error:', error)
       toast.dismiss(uploadToast)
       toast.error('Failed to upload image')
+      throw error
     } finally {
       setUploadingImage(false)
+    }
+  }
+
+  const handleFeaturedImageUpload = async (file: File) => {
+    try {
+      const url = await handleImageUpload(file)
+      setFormData(prev => ({ ...prev, image: url }))
+    } catch (error) {
+      // Error already handled in handleImageUpload
     }
   }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      handleImageUpload(file)
+      handleFeaturedImageUpload(file)
     }
   }
 
@@ -125,38 +132,6 @@ export function PostForm({ initialData, onSubmit, loading = false }: PostFormPro
     }
   }
 
-  // Format insertion functions
-  const insertFormatting = (before: string, after: string = '', placeholder: string = '') => {
-    const textarea = document.querySelector('textarea') as HTMLTextAreaElement
-    if (!textarea) return
-
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const selectedText = formData.content.substring(start, end)
-    const replacement = selectedText || placeholder
-    
-    const newContent = 
-      formData.content.substring(0, start) + 
-      before + replacement + after + 
-      formData.content.substring(end)
-    
-    setFormData(prev => ({ ...prev, content: newContent }))
-    
-    // Set cursor position
-    setTimeout(() => {
-      const newPos = start + before.length + replacement.length
-      textarea.setSelectionRange(newPos, newPos)
-      textarea.focus()
-    }, 0)
-  }
-
-  const insertCodeBlock = (language: string = '') => {
-    insertFormatting(`\`\`\`${language}\n`, '\n```', 'Your code here')
-  }
-
-  const insertCommand = () => {
-    insertFormatting('```bash\n', '\n```', '$ your-command-here')
-  }
 
   const tagArray = formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
 
@@ -194,37 +169,7 @@ export function PostForm({ initialData, onSubmit, loading = false }: PostFormPro
           )}
           
           <div className="prose prose-slate max-w-none dark:prose-invert break-words prose-lg">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-              components={{
-                pre: ({ children, ...props }) => {
-                  const child = children as any
-                  if (child?.props?.className?.includes('hljs')) {
-                    const code = child.props.children
-                    const language = child.props.className?.match(/language-(\w+)/)?.[1]
-                    return (
-                      <CodeBlock className={child.props.className} language={language}>
-                        {code}
-                      </CodeBlock>
-                    )
-                  }
-                  return <pre {...props}>{children}</pre>
-                },
-                code: ({ children, className, ...props }) => {
-                  if (className?.includes('hljs')) {
-                    return <code className={className} {...props}>{children}</code>
-                  }
-                  return (
-                    <InlineCode className={className}>
-                      {String(children)}
-                    </InlineCode>
-                  )
-                }
-              }}
-            >
-              {formData.content || 'Start writing your content...'}
-            </ReactMarkdown>
+            <div dangerouslySetInnerHTML={{ __html: formData.content || '<p>Start writing your content...</p>' }} />
           </div>
         </div>
       ) : (
@@ -284,199 +229,13 @@ export function PostForm({ initialData, onSubmit, loading = false }: PostFormPro
             <div className="bg-white dark:bg-gray-950 rounded-xl border p-6 space-y-6">
               <h2 className="text-xl font-semibold border-b pb-3">Content</h2>
               
-              {/* Formatting Toolbar */}
-              <div className="border rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
-                <div className="flex flex-wrap gap-2">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('# ', '', 'Heading 1')}
-                      title="Heading 1"
-                      className="h-8 px-2"
-                    >
-                      H1
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('## ', '', 'Heading 2')}
-                      title="Heading 2"
-                      className="h-8 px-2"
-                    >
-                      H2
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('### ', '', 'Heading 3')}
-                      title="Heading 3"
-                      className="h-8 px-2"
-                    >
-                      H3
-                    </Button>
-                  </div>
-                  
-                  <div className="border-l mx-2" />
-                  
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('**', '**', 'bold text')}
-                      title="Bold"
-                      className="h-8 px-2"
-                    >
-                      <strong>B</strong>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('*', '*', 'italic text')}
-                      title="Italic"
-                      className="h-8 px-2"
-                    >
-                      <em>I</em>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('`', '`', 'inline code')}
-                      title="Inline Code"
-                      className="h-8 px-2"
-                    >
-                      {'</>'}
-                    </Button>
-                  </div>
-                  
-                  <div className="border-l mx-2" />
-                  
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertCodeBlock('javascript')}
-                      title="JavaScript Code Block"
-                      className="h-8 px-2"
-                    >
-                      JS
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertCodeBlock('typescript')}
-                      title="TypeScript Code Block"
-                      className="h-8 px-2"
-                    >
-                      TS
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertCodeBlock()}
-                      title="Code Block"
-                      className="h-8 px-2"
-                    >
-                      Code
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertCommand}
-                      title="Command/Terminal"
-                      className="h-8 px-2"
-                    >
-                      CMD
-                    </Button>
-                  </div>
-                  
-                  <div className="border-l mx-2" />
-                  
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('- ', '', 'List item')}
-                      title="Bullet List"
-                      className="h-8 px-2"
-                    >
-                      •
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('1. ', '', 'Numbered item')}
-                      title="Numbered List"
-                      className="h-8 px-2"
-                    >
-                      1.
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertFormatting('> ', '', 'Quote text')}
-                      title="Quote"
-                      className="h-8 px-2"
-                    >
-                      &quot;
-                    </Button>
-                  </div>
-                  
-                  <div className="border-l mx-2" />
-                  
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPreviewMode(!previewMode)}
-                    title="Toggle Preview"
-                    className="h-8 px-3"
-                  >
-                    {previewMode ? 'Edit' : 'Preview'}
-                  </Button>
-                </div>
-              </div>
-              
-              <Textarea
+              <RichTextEditor
                 value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                placeholder="Write your post content here... (Markdown supported)"
-                className="min-h-[500px] font-mono text-sm leading-relaxed resize-none"
+                onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+                placeholder="Start writing your post content..."
+                height="500"
+                onImageUpload={handleImageUpload}
               />
-              
-              {/* Formatting Guide */}
-              <div className="text-sm text-muted-foreground">
-                <details>
-                  <summary className="cursor-pointer hover:text-foreground font-medium">Markdown Formatting Guide</summary>
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 pl-4">
-                    <div className="space-y-1">
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded"># Heading 1</code> → Large heading</p>
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">## Heading 2</code> → Medium heading</p>
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">**bold**</code> → <strong>bold text</strong></p>
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">*italic*</code> → <em>italic text</em></p>
-                    </div>
-                    <div className="space-y-1">
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">`inline code`</code> → <code>inline code</code></p>
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">```javascript</code> → Code blocks</p>
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">- List item</code> → Bullet points</p>
-                      <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">&gt; Quote</code> → Block quotes</p>
-                    </div>
-                  </div>
-                </details>
-              </div>
             </div>
           </div>
           

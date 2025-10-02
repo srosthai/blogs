@@ -2,10 +2,6 @@ import { notFound } from "next/navigation"
 import { supabase } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-import { CodeBlock, InlineCode } from '@/components/CodeBlock'
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, Layers, Home } from "lucide-react"
@@ -43,7 +39,12 @@ export async function generateMetadata({ params }: Props) {
     }
   }
 
-  const description = post.content.slice(0, 160).replace(/[#*`\[\]]/g, '')
+  // Strip HTML tags for description
+  const stripHtml = (html: string) => {
+    const tmp = html.replace(/<[^>]*>/g, '');
+    return tmp.replace(/\s+/g, ' ').trim();
+  }
+  const description = stripHtml(post.content).slice(0, 160)
   const publishedTime = new Date(post.createdAt).toISOString()
   const modifiedTime = new Date(post.updatedAt || post.createdAt).toISOString()
   const tags = post.tags ? post.tags.split(',').map((tag: string) => tag.trim()) : []
@@ -113,11 +114,17 @@ export default async function BlogPost({ params }: Props) {
 
   const tagArray = post.tags ? post.tags.split(',').map((tag: string) => tag.trim()) : []
 
+  // Strip HTML tags for description
+  const stripHtml = (html: string) => {
+    const tmp = html.replace(/<[^>]*>/g, '');
+    return tmp.replace(/\s+/g, ' ').trim();
+  }
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": post.title,
-    "description": post.content.slice(0, 160).replace(/[#*`\[\]]/g, ''),
+    "description": stripHtml(post.content).slice(0, 160),
     "image": post.image || "https://blog.srosthai.dev/me-fav.png",
     "datePublished": new Date(post.createdAt).toISOString(),
     "dateModified": new Date(post.updatedAt || post.createdAt).toISOString(),
@@ -200,73 +207,35 @@ export default async function BlogPost({ params }: Props) {
           </div>
         )}
         
-        <div className="prose prose-lg prose-slate max-w-none dark:prose-invert break-words">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-            components={{
-              // Code blocks (```code```)
-              pre: ({ children, ...props }) => {
-                const child = children as any
-                if (child?.props?.className?.includes('hljs')) {
-                  const code = child.props.children
-                  let language = child.props.className?.match(/language-(\w+)/)?.[1]
-                  
-                  // Enhanced language detection for Laravel/Blade
-                  if (language === 'blade' || language === 'laravel') {
-                    // Add custom Blade syntax processing
-                    const processedCode = code.replace(
-                      /(\{\{|\{\!\!)(.*?)(\}\}|\!\!\})/g,
-                      '<span class="hljs-blade-echo">$1$2$3</span>'
-                    ).replace(
-                      /@(\w+)(\([^)]*\))?/g,
-                      '<span class="hljs-blade-directive">@$1</span><span class="hljs-blade-tag">$2</span>'
-                    ).replace(
-                      /\$(\w+)/g,
-                      '<span class="hljs-blade-variable">$$1</span>'
-                    )
-                    
-                    return (
-                      <div className="code-block-container group">
-                        <div className="code-block-header flex items-center justify-between px-4 py-2 bg-muted/50 border-b border-border rounded-t-lg text-xs font-medium text-muted-foreground">
-                          <span className="uppercase tracking-wide">Laravel</span>
-                        </div>
-                        <pre className={`${child.props.className} !mt-0 !rounded-t-none`}>
-                          <code 
-                            className={child.props.className}
-                            dangerouslySetInnerHTML={{ __html: processedCode }}
-                          />
-                        </pre>
-                      </div>
-                    )
-                  }
-                  
-                  return (
-                    <CodeBlock className={child.props.className} language={language}>
-                      {code}
-                    </CodeBlock>
-                  )
-                }
-                return <pre {...props}>{children}</pre>
-              },
-              // Inline code (`code`)
-              code: ({ children, className, ...props }) => {
-                // If it's inside a pre tag (code block), render normally
-                if (className?.includes('hljs')) {
-                  return <code className={className} {...props}>{children}</code>
-                }
-                // If it's inline code, add copy functionality
-                return (
-                  <InlineCode className={className}>
-                    {String(children)}
-                  </InlineCode>
-                )
-              }
-            }}
-          >
-            {post.content}
-          </ReactMarkdown>
-        </div>
+        {/* HTML Content from Summernote */}
+        <div 
+          className="prose prose-lg prose-slate max-w-none dark:prose-invert break-words
+            prose-headings:scroll-mt-20
+            prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-4
+            prose-h2:text-2xl prose-h2:font-semibold prose-h2:mb-3 prose-h2:mt-8
+            prose-h3:text-xl prose-h3:font-semibold prose-h3:mb-2 prose-h3:mt-6
+            prose-h4:text-lg prose-h4:font-semibold prose-h4:mb-2 prose-h4:mt-4
+            prose-p:mb-4 prose-p:leading-7
+            prose-ul:mb-4 prose-ul:ml-6 prose-ul:list-disc
+            prose-ol:mb-4 prose-ol:ml-6 prose-ol:list-decimal
+            prose-li:mb-1
+            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:my-4
+            prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+            prose-pre:bg-muted prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:my-4
+            prose-img:rounded-lg prose-img:shadow-md prose-img:my-6
+            prose-table:my-4 prose-table:overflow-x-auto
+            prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted
+            prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2
+            prose-strong:font-bold
+            prose-em:italic
+            prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80
+            [&_pre]:bg-[#1e1e1e] [&_pre]:text-[#d4d4d4]
+            dark:[&_pre]:bg-[#0a0a0a]
+            [&_pre_code]:bg-transparent [&_pre_code]:p-0
+            [&_video]:max-w-full [&_video]:rounded-lg [&_video]:my-6
+            [&_iframe]:max-w-full [&_iframe]:rounded-lg [&_iframe]:my-6"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
         </article>
       </div>
     </>
