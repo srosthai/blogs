@@ -232,77 +232,93 @@ export default function CategoryPage() {
 
   // Post card component for list view
   const PostListItem = ({ post }: { post: Post }) => (
-    <Card className="hover:shadow-lg transition-all duration-300 border border-border/50 hover:border-primary/20">
-      <CardContent className="p-0">
-        <div className="flex flex-col md:flex-row">
+    <Card className="group hover:shadow-lg transition-all duration-300 bg-card border border-border/30 hover:border-border/50">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
           {/* Image */}
-          <div className="relative w-full md:w-48 h-48 md:h-32 overflow-hidden bg-gradient-to-br from-primary/10 to-muted/20">
+          <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 shrink-0">
             {post.image ? (
               <Image
                 src={post.image}
                 alt={post.title}
                 fill
-                className="object-cover transition-transform duration-300 hover:scale-105"
+                sizes="64px"
+                className="object-cover"
               />
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <FileText className="h-8 w-8 text-muted-foreground" />
+              <div className="h-full flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-primary" />
               </div>
             )}
           </div>
           
           {/* Content */}
-          <div className="flex-1 p-4 md:p-6">
-            <div className="flex flex-col h-full justify-between">
-              <div className="space-y-2">
-                <div className="flex items-start justify-between gap-4">
-                  <Link href={`/blog/${post.slug}`} className="group">
-                    <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                      {post.title}
-                    </h3>
-                  </Link>
-                  <Badge variant="outline" className="text-xs whitespace-nowrap">
-                    {post.category?.name || 'Uncategorized'}
-                  </Badge>
-                </div>
-                
-                <p className="text-muted-foreground text-sm line-clamp-2">
-                  {post.content.replace(/[#*`]/g, '').substring(0, 120)}...
-                </p>
+          <div className="flex-1 min-w-0 space-y-1">
+            {/* Category Badge */}
+            {post.category && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Hash className="h-3 w-3" />
+                <span className="font-medium">{post.category.name}</span>
               </div>
-              
-              <div className="flex items-center justify-between mt-4 pt-2 border-t border-border/30">
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {new Date(post.createdAt).toLocaleDateString()}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-3 w-3" />
-                    {post.author.name}
-                  </div>
-                </div>
-                
-                {post.tags && (
-                  <div className="flex items-center gap-1">
-                    <Hash className="h-3 w-3 text-muted-foreground" />
-                    <div className="flex gap-1">
-                      {post.tags.split(',').slice(0, 2).map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs px-1.5 py-0.5">
-                          {tag.trim()}
-                        </Badge>
-                      ))}
-                      {post.tags.split(',').length > 2 && (
-                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
-                          +{post.tags.split(',').length - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+            )}
+            
+            {/* Title */}
+            <Link href={`/blog/${post.slug}`} className="group/title">
+              <h3 className="text-lg font-semibold text-foreground group-hover/title:text-primary transition-colors line-clamp-1">
+                {post.title}
+              </h3>
+            </Link>
+            
+            {/* Meta Info */}
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                <span>{post.author.name}</span>
               </div>
             </div>
           </div>
+          
+          {/* Tags */}
+          <div className="hidden sm:flex items-center gap-1 shrink-0">
+            {post.tags && post.tags.split(',').slice(0, 2).map((tag, index) => (
+              <Badge 
+                key={index}
+                variant="secondary" 
+                className="text-xs px-1.5 py-0.5 cursor-pointer hover:bg-muted"
+              >
+                {tag.trim()}
+              </Badge>
+            ))}
+            {post.tags && post.tags.split(',').length > 2 && (
+              <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                +{post.tags.split(',').length - 2}
+              </Badge>
+            )}
+          </div>
+          
+          {/* Date Range Style */}
+          <div className="hidden md:flex flex-col items-end text-right shrink-0">
+            <span className="text-xs text-muted-foreground font-medium">PUBLISHED</span>
+            <span className="text-sm font-semibold text-foreground">
+              {new Date(post.createdAt).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </span>
+          </div>
+          
+          {/* Action Button */}
+          <Link 
+            href={`/blog/${post.slug}`}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shrink-0"
+          >
+            Read Post
+          </Link>
         </div>
       </CardContent>
     </Card>
@@ -491,21 +507,23 @@ export default function CategoryPage() {
 
           {/* Posts Section */}
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col">
                 <h2 className="text-2xl font-bold">
                   {filteredPosts.length === 0 ? 'No Posts Found' : selectedCategoryId ? 'Filtered Posts' : 'Latest Posts'}
                 </h2>
-                {filteredPosts.length > 0 && (
-                  <Badge variant="outline" className="font-medium">
-                    {filteredPosts.length} {filteredPosts.length === 1 ? 'Post' : 'Posts'}
-                  </Badge>
-                )}
-                {selectedCategoryId && (
-                  <Badge variant="default" className="font-medium">
-                    Filtered by: {filteredCategories.find(cat => cat.id === selectedCategoryId)?.name}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2 mt-1">
+                  {filteredPosts.length > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {filteredPosts.length} {filteredPosts.length === 1 ? 'Post' : 'Posts'}
+                    </span>
+                  )}
+                  {selectedCategoryId && (
+                    <Badge variant="default" className="text-xs">
+                      Filtered by: {filteredCategories.find(cat => cat.id === selectedCategoryId)?.name}
+                    </Badge>
+                  )}
+                </div>
               </div>
               
               {/* Controls */}
@@ -519,46 +537,31 @@ export default function CategoryPage() {
                     className="gap-2"
                   >
                     <Filter className="h-4 w-4" />
-                    Clear Filter
+                    <span className="hidden sm:inline">Clear Filter</span>
                   </Button>
                 )}
                 
                 {/* View Toggle */}
                 {filteredPosts.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-muted-foreground">View:</span>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant={viewMode === 'grid' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setViewMode('grid')}
-                        className={`
-                          gap-2 h-9 px-4 font-medium transition-all duration-300
-                          ${viewMode === 'grid' 
-                            ? 'shadow-lg shadow-primary/20 scale-105' 
-                            : 'hover:scale-105 hover:shadow-md hover:border-primary/50'
-                          }
-                        `}
-                      >
-                        <Grid3x3 className="h-4 w-4" />
-                        Grid
-                      </Button>
-                      <Button
-                        variant={viewMode === 'list' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setViewMode('list')}
-                        className={`
-                          gap-2 h-9 px-4 font-medium transition-all duration-300
-                          ${viewMode === 'list' 
-                            ? 'shadow-lg shadow-primary/20 scale-105' 
-                            : 'hover:scale-105 hover:shadow-md hover:border-primary/50'
-                          }
-                        `}
-                      >
-                        <List className="h-4 w-4" />
-                        List
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="gap-2 h-8 px-3"
+                    >
+                      <Grid3x3 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Grid</span>
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="gap-2 h-8 px-3"
+                    >
+                      <List className="h-4 w-4" />
+                      <span className="hidden sm:inline">List</span>
+                    </Button>
                   </div>
                 )}
               </div>
