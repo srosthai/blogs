@@ -50,7 +50,7 @@ export default function Home() {
   const CategoryCardSkeleton = () => (
     <Card className="h-full overflow-hidden bg-card border border-border/30 rounded-2xl flex flex-col">
       <div className="relative p-3">
-        <Skeleton className="h-45 w-full rounded-xl" />
+        <Skeleton className="h-32 sm:h-36 md:h-40 lg:h-44 w-full rounded-xl" />
         {/* Heart icon skeleton */}
         <div className="absolute top-5 right-5">
           <Skeleton className="w-7 h-7 rounded-full" />
@@ -137,12 +137,13 @@ export default function Home() {
                     <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer bg-card border border-border/30 rounded-2xl hover:-translate-y-1 flex flex-col">
                       {/* Category Image with Heart Icon */}
                       <div className="relative p-3">
-                        <div className="relative h-45 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm">
+                        <div className="relative h-32 sm:h-36 md:h-40 lg:h-44 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm">
                           {category.image ? (
                             <Image
                               src={category.image}
                               alt={category.name}
                               fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                               className="object-cover group-hover:scale-110 transition-transform duration-500 rounded-xl"
                             />
                           ) : (

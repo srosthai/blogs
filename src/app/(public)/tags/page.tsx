@@ -122,7 +122,7 @@ export default function TagsPage() {
 
   const PostCardSkeleton = () => (
     <Card className="h-full overflow-hidden">
-      <div className="relative h-48 w-full">
+      <div className="relative h-32 sm:h-36 md:h-40 lg:h-48 w-full">
         <Skeleton className="h-full w-full" />
       </div>
       <CardContent className="p-4 space-y-3">
@@ -183,26 +183,30 @@ export default function TagsPage() {
           {/* Tags Filter Section */}
           <Card className="max-w-6xl mx-auto bg-white/50 dark:bg-card/50 backdrop-blur border-border/50">
             <CardHeader className="pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5 text-primary" />
-                  <span>Filter by Tag</span>
-                  {selectedTag && (
-                    <Badge variant="default" className="ml-2">
-                      {selectedTag}
-                    </Badge>
-                  )}
-                </CardTitle>
-                
-                {/* Search Tags */}
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search tags..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <CardTitle className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-5 w-5 text-primary" />
+                      <span>Filter by Tag</span>
+                    </div>
+                    {selectedTag && (
+                      <Badge variant="default" className="w-fit">
+                        {selectedTag}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  
+                  {/* Search Tags */}
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search tags..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -214,28 +218,30 @@ export default function TagsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto">
-                  <Button 
-                    variant={!selectedTag ? "default" : "outline"} 
-                    size="sm" 
-                    onClick={() => router.push('/tags')}
-                    className="gap-2"
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    All Posts
-                  </Button>
-                  {filteredTags.map((tag) => (
+                <div className="flex justify-between flex-wrap gap-2 max-h-64 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2">
                     <Button 
-                      key={tag} 
-                      variant={selectedTag === tag ? "default" : "outline"} 
-                      size="sm"
-                      onClick={() => handleTagSelect(tag)}
+                      variant={!selectedTag ? "default" : "outline"} 
+                      size="sm" 
+                      onClick={() => router.push('/tags')}
                       className="gap-2"
                     >
-                      <Hash className="h-3 w-3" />
-                      {tag}
+                      <Sparkles className="h-3 w-3" />
+                      All Posts
                     </Button>
-                  ))}
+                    {filteredTags.map((tag) => (
+                      <Button 
+                        key={tag} 
+                        variant={selectedTag === tag ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => handleTagSelect(tag)}
+                        className="gap-2"
+                      >
+                        <Hash className="h-3 w-3" />
+                        {tag}
+                      </Button>
+                    ))}
+                  </div>
                   {filteredTags.length === 0 && searchTerm && (
                     <p className="text-muted-foreground text-sm py-4">
                       No tags found matching "{searchTerm}"
@@ -282,14 +288,14 @@ export default function TagsPage() {
               </Card>
             ) : (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col">
                     <h2 className="text-2xl font-bold">
                       {selectedTag ? `Posts tagged "${selectedTag}"` : 'All Posts'}
                     </h2>
-                    <Badge variant="outline" className="font-medium">
+                    <span className="text-sm text-muted-foreground mt-1">
                       {posts.length} {posts.length === 1 ? 'Post' : 'Posts'}
-                    </Badge>
+                    </span>
                   </div>
                   
                   {/* View Toggle */}
@@ -301,7 +307,7 @@ export default function TagsPage() {
                       className="gap-2 h-8 px-3"
                     >
                       <Grid3x3 className="h-4 w-4" />
-                      Grid
+                      <span className="hidden sm:inline">Grid</span>
                     </Button>
                     <Button
                       variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -310,7 +316,7 @@ export default function TagsPage() {
                       className="gap-2 h-8 px-3"
                     >
                       <List className="h-4 w-4" />
-                      List
+                      <span className="hidden sm:inline">List</span>
                     </Button>
                   </div>
                 </div>
@@ -323,73 +329,94 @@ export default function TagsPage() {
                     viewMode === 'grid' ? (
                       <PostCard key={post.id} {...post} />
                     ) : (
-                      <Card key={post.id} className="hover:shadow-lg transition-all duration-300 border border-border/50">
-                        <CardContent className="p-0">
-                          <div className="flex flex-col md:flex-row">
-                            <div className="relative w-full md:w-48 h-48 md:h-32 overflow-hidden bg-gradient-to-br from-primary/10 to-muted/20">
+                      <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 bg-card border border-border/30 hover:border-border/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-4">
+                            {/* Image */}
+                            <div className="relative w-16 h-16 rounded-lg overflow-hidden from-primary/10 to-secondary/10 shrink-0">
                               {post.image ? (
                                 <Image
                                   src={post.image}
                                   alt={post.title}
                                   fill
-                                  sizes="(max-width: 768px) 100vw, 192px"
-                                  className="object-cover transition-transform duration-300 hover:scale-105"
+                                  sizes="64px"
+                                  className="object-cover"
                                 />
                               ) : (
-                                <div className="relative h-full bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 flex items-center justify-center">
-                                  <div className="flex flex-col items-center justify-center text-center">
-                                    <div className="p-2 rounded-full bg-primary/10 mb-1">
-                                      <BookOpen className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <p className="text-xs font-medium text-muted-foreground">Read Article</p>
-                                  </div>
+                                <div className="h-full flex items-center justify-center">
+                                  <BookOpen className="h-6 w-6 text-primary" />
                                 </div>
                               )}
                             </div>
                             
-                            <div className="flex-1 p-4 md:p-6">
-                              <div className="flex flex-col h-full justify-between">
-                                <div className="space-y-2">
-                                  <Link href={`/blog/${post.slug}`} className="group">
-                                    <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                                      {post.title}
-                                    </h3>
-                                  </Link>
-                                  
-                                  <p className="text-muted-foreground text-sm line-clamp-2">
-                                    {post.content.replace(/[#*`]/g, '').substring(0, 120)}...
-                                  </p>
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 space-y-1">
+                              {/* Category Badge */}
+                              {post.category && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Hash className="h-3 w-3" />
+                                  <span className="font-medium">{post.category.name}</span>
                                 </div>
-                                
-                                <div className="flex items-center justify-between mt-4 pt-2 border-t border-border/30">
-                                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      {new Date(post.createdAt).toLocaleDateString()}
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <Eye className="h-3 w-3" />
-                                      {post.author.name}
-                                    </div>
-                                  </div>
-                                  
-                                  {post.tags && (
-                                    <div className="flex gap-1">
-                                      {post.tags.split(',').slice(0, 2).map((tag, index) => (
-                                        <Badge key={index} variant="secondary" className="text-xs px-1.5 py-0.5">
-                                          {tag.trim()}
-                                        </Badge>
-                                      ))}
-                                      {post.tags.split(',').length > 2 && (
-                                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
-                                          +{post.tags.split(',').length - 2}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  )}
+                              )}
+                              
+                              {/* Title */}
+                              <Link href={`/blog/${post.slug}`} className="group/title">
+                                <h3 className="text-lg font-semibold text-foreground group-hover/title:text-primary transition-colors line-clamp-1">
+                                  {post.title}
+                                </h3>
+                              </Link>
+                              
+                              {/* Meta Info */}
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Eye className="h-3 w-3" />
+                                  <span>{post.author.name}</span>
                                 </div>
                               </div>
                             </div>
+                            
+                            {/* Tags */}
+                            <div className="hidden sm:flex items-center gap-1 shrink-0">
+                              {post.tags && post.tags.split(',').slice(0, 2).map((tag, index) => (
+                                <Badge 
+                                  key={index}
+                                  variant="secondary" 
+                                  className="text-xs px-1.5 py-0.5 cursor-pointer hover:bg-muted"
+                                  onClick={() => handleTagSelect(tag.trim())}
+                                >
+                                  {tag.trim()}
+                                </Badge>
+                              ))}
+                              {post.tags && post.tags.split(',').length > 2 && (
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                                  +{post.tags.split(',').length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {/* Date Range Style */}
+                            <div className="hidden md:flex flex-col items-end text-right shrink-0">
+                              <span className="text-xs text-muted-foreground font-medium">PUBLISHED</span>
+                              <span className="text-sm font-semibold text-foreground">
+                                {new Date(post.createdAt).toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                            
+                            {/* Action Button */}
+                            <Link 
+                              href={`/blog/${post.slug}`}
+                              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shrink-0"
+                            >
+                              Read Post
+                            </Link>
                           </div>
                         </CardContent>
                       </Card>
