@@ -137,8 +137,8 @@ export default function Home() {
                     <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer bg-card border border-border/30 rounded-2xl hover:-translate-y-1 flex flex-col">
                       {/* Category Image with Heart Icon */}
                       <div className="relative p-3">
-                        <div className="relative h-32 sm:h-36 md:h-40 lg:h-44 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm">
-                          {category.image ? (
+                        {category.image ? (
+                          <div className="relative h-32 sm:h-36 md:h-40 lg:h-44 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm">
                             <Image
                               src={category.image}
                               alt={category.name}
@@ -146,17 +146,19 @@ export default function Home() {
                               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                               className="object-cover group-hover:scale-110 transition-transform duration-500 rounded-xl"
                             />
-                          ) : (
+                            {/* Subtle overlay for better contrast */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/5 rounded-xl"></div>
+                          </div>
+                        ) : (
+                          <div className="relative h-32 sm:h-36 md:h-40 lg:h-44 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm">
                             <div className="flex items-center justify-center h-full rounded-xl">
                               <div className="relative">
                                 <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
                                 <Layers className="h-10 w-10 text-primary/60 relative" />
                               </div>
                             </div>
-                          )}
-                          {/* Subtle overlay for better contrast */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/5 rounded-xl"></div>
-                        </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Card Content */}
